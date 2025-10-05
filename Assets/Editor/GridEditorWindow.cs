@@ -22,7 +22,8 @@ public class GridWindow : EditorWindow
 
     [Header("Properties For Navigating Editor")]
     private Vector2 mainScroll; // ============ Window Scrolllllll ============//
-    
+    bool autoSaveAfterBuild;
+
     [Header("Properties For Navigating Editor - PREFAB SECTION")]
     bool toShowPrefabSection = false;
     private int tabIndex = 0; // 0 = All Prefabs, 1 = Grouped Prefabs
@@ -39,6 +40,26 @@ public class GridWindow : EditorWindow
     
     [Header("Properties For Navigating Editor - GROUPED PREFABS PROPERTIES")]
     bool toShowSecondLevelPrefabProperties = false;
+
+    [Header("Properties For Navigating Editor - Brush")]
+    private BrushMode currentBrushMode = BrushMode.Single;
+    private enum BrushMode
+    {
+        Single,
+        Multi,
+        Fill,
+        Line,
+        Rectangle,
+        Erase
+    }
+    private Texture2D singleIcon;
+    private Texture2D multiIcon;
+    private Texture2D fillIcon;
+    private Texture2D lineIcon;
+    private Texture2D rectangleIcon;
+    private Texture2D eraseIcon;
+
+
 
     [Header("Properties For Making Editor")]
     float prefabThumbnailSize = 70f;
@@ -72,6 +93,17 @@ public class GridWindow : EditorWindow
         gridTileWidth = serializedObject.FindProperty("TileWidth");
         allPrefabs = serializedObject.FindProperty("AllPrefabs");
         groupedPrefabs = serializedObject.FindProperty("GroupedPrefabs");
+
+        LoadBrushIcons();
+    }
+    private void LoadBrushIcons()
+    {
+        singleIcon = EditorGUIUtility.IconContent("Prefab Icon").image as Texture2D;
+        multiIcon = EditorGUIUtility.IconContent("GameObject Icon").image as Texture2D;
+        fillIcon = EditorGUIUtility.IconContent("SceneAsset Icon").image as Texture2D;
+        lineIcon = EditorGUIUtility.IconContent("d_UnityEditor.AnimationWindow").image as Texture2D;
+        rectangleIcon = EditorGUIUtility.IconContent("d_UnityEditor.ConsoleWindow").image as Texture2D;
+        eraseIcon = EditorGUIUtility.IconContent("TreeEditor.Trash").image as Texture2D;
     }
 
 
@@ -98,6 +130,8 @@ public class GridWindow : EditorWindow
         IF_NO_ASSET_FOUND_GUI();
 
         DATA_AND_REFERENCES_GUI();
+
+        BRUSH_TOOLS_GUI();
 
         PREFABS_TAB_GUI();
 
@@ -204,6 +238,58 @@ public class GridWindow : EditorWindow
         EditorGUILayout.PropertyField(gridTileWidth);
         GUILayout.Space(20);
 
+    }
+    private void BRUSH_TOOLS_GUI()
+    {
+        GUILayout.Space(10);
+        DrawHorizontalLine(new Color(0.3f, 0.3f, 0.3f, 1f));
+        GUILayout.Space(8);
+
+        DrawCenteredLabel("Brush Tools", 18, FontStyle.Bold, new Color(0.334f, 0.545f, 0.375f));
+        GUILayout.Space(8);
+
+        using (new GUILayout.VerticalScope("box"))
+        {
+            GUILayout.Space(5);
+
+            // Brush Mode Selection
+            using (new GUILayout.HorizontalScope())
+            {
+                GUILayout.FlexibleSpace();
+
+                DrawBrushButton(singleIcon, BrushMode.Single, "Place one prefab");
+                DrawBrushButton(multiIcon, BrushMode.Multi, "Place multiple prefabs");
+                DrawBrushButton(fillIcon, BrushMode.Fill, "Fill selected area");
+                DrawBrushButton(lineIcon, BrushMode.Line, "Draw line of prefabs");
+                DrawBrushButton(rectangleIcon, BrushMode.Rectangle, "Draw rectangle");
+                DrawBrushButton(eraseIcon, BrushMode.Erase, "Erase prefab");
+
+                GUILayout.FlexibleSpace();
+            }
+
+            GUILayout.Space(5);
+        }
+
+        GUILayout.Space(10);
+        DrawHorizontalLine(new Color(0.3f, 0.3f, 0.3f, 1f));
+
+        void DrawBrushButton(Texture2D icon, BrushMode mode, string tooltip)
+        {
+            GUIStyle style = new GUIStyle(GUI.skin.button);
+            style.fixedWidth = 50;
+            style.fixedHeight = 50;
+            style.imagePosition = ImagePosition.ImageAbove;
+
+            if (currentBrushMode == mode)
+            {
+                style.normal.background = Texture2D.grayTexture; // highlight selected
+            }
+
+            if (GUILayout.Button(new GUIContent(icon, tooltip), style))
+            {
+                currentBrushMode = mode;
+            }
+        }
     }
     private void PREFABS_TAB_GUI()
     {
@@ -537,7 +623,6 @@ public class GridWindow : EditorWindow
             }
         }
     }
-
     private void DrawAllPrefabListElements(SerializedProperty listProperty, float thumbnailSize, ref Vector2 scrollPos, List<int> selectedIndices)
     {
         if (listProperty == null || !listProperty.isArray)
@@ -724,7 +809,6 @@ public class GridWindow : EditorWindow
             }
         }
     }
-
     private void DrawGroupedPrefabListElements(SerializedProperty groupedPrefabs, float thumbnailSize)
     {
         if (groupedPrefabs == null || !groupedPrefabs.isArray)
@@ -904,7 +988,6 @@ public class GridWindow : EditorWindow
 
         GUI.EndScrollView();
     }
-
     bool DeleteSelectedFromList(SerializedProperty listProperty, ref List<int> selectedIndices)
     {
         if (selectedIndices.Count == 0) return false;
@@ -923,6 +1006,22 @@ public class GridWindow : EditorWindow
         selectedIndices.Clear();
         serializedObject.ApplyModifiedProperties();
         return true;
+    }
+    private void BuildLevel()
+    {
+        Debug.Log("Building level with current grid and prefab data...");
+        // TODO: implement your grid prefab instantiation logic here
+    }
+    private void ClearLevel()
+    {
+        Debug.Log("Clearing all instantiated prefabs from the scene...");
+        // TODO: destroy or reset placed prefabs here
+    }
+
+    private void BakeLevel()
+    {
+        Debug.Log("Baking level (combining meshes, setting static flags, etc.)...");
+        // TODO: perform optimization or mesh combining
     }
 
 
@@ -975,6 +1074,13 @@ public class GridWindow : EditorWindow
         result.SetPixels(pix);
         result.Apply();
         return result;
+    }
+    private void DrawHorizontalLine(Color color, int thickness = 2, int padding = 5)
+    {
+        Rect r = EditorGUILayout.GetControlRect(GUILayout.Height(padding + thickness));
+        r.height = thickness;
+        r.y += padding / 2;
+        EditorGUI.DrawRect(r, color);
     }
 
 }
