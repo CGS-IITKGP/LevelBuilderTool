@@ -73,3 +73,22 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# Ignore local package cache
+/[Pp]ackages/packages-lock.json
+
+# Ignore crash dumps
+*.stacktrace
+
+# Ignore local build artifacts
+/[Bb]in/
+/[Oo]utput/
+/[Dd]ist/
+
+# Ignore Rider/VSCode workspace settings
+.idea/
+.vscode/
+
+# Ignore Addressables build cache (optional)
+Assets/AddressableAssetsData/*/catalog_*.json
+Assets/AddressableAssetsData/*/addressables_content_state.bin

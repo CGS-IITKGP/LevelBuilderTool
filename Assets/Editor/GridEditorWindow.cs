@@ -1,0 +1,983 @@
+using System;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
+
+public class GridWindow : EditorWindow
+{
+    [Header("References")]
+    GridTileData gridTileData;
+    Grid grid;
+
+    [Header("References for Serialized Data")]
+    SerializedObject serializedObject;
+    SerializedProperty gridYPosProperty;
+    SerializedProperty gridTileWidth;
+    SerializedProperty allPrefabs;
+    SerializedProperty groupedPrefabs;
+
+
+
+
+
+    [Header("Properties For Navigating Editor")]
+    private Vector2 mainScroll; // ============ Window Scrolllllll ============//
+    
+    [Header("Properties For Navigating Editor - PREFAB SECTION")]
+    bool toShowPrefabSection = false;
+    private int tabIndex = 0; // 0 = All Prefabs, 1 = Grouped Prefabs
+    private string[] tabs = new string[] { "All Prefabs", "Grouped Prefabs" };
+    private List<int> selectedIndices = new(); // ======= List of selected prefab in (all prefabs) and (grouped prefabs) =======//
+    SerializedProperty currentPrefabList; // ====to keep track of which list is currently being edited (allPrefabs or groupedPrefabs)=====//
+    private Vector2 scrollPos;
+    
+    [Header("Properties For Navigating Editor - ALL PREFABS")]
+    
+    [Header("Properties For Navigating Editor - GROUPED PREFABS")]
+    List<int> secondSelectedIndices = new(); // ======= List of selected prefab in (grouped prefab) when editing a group =======//
+    private Vector2 secondScrollPos;
+    
+    [Header("Properties For Navigating Editor - GROUPED PREFABS PROPERTIES")]
+    bool toShowSecondLevelPrefabProperties = false;
+
+    [Header("Properties For Making Editor")]
+    float prefabThumbnailSize = 70f;
+    string newGroupName = "New Group";
+
+
+
+
+
+
+
+    [MenuItem("Grid Tiles/Grid Window")]
+    public static void ShowWindow()
+    {
+        GetWindow<GridWindow>("Grid Tile");
+    }
+
+
+
+
+    private void OnEnable()
+    {
+        gridTileData = AssetDatabase.LoadAssetAtPath<GridTileData>("Assets/All TileMap Editor Assets/ScriptableObjects/GridTileData.asset");
+        if (gridTileData == null)
+        {
+            Debug.LogError("GridTileData asset not found at specified path.");
+            return;
+        }
+        serializedObject = new SerializedObject(gridTileData);
+        gridYPosProperty = serializedObject.FindProperty("GridYPos");
+        gridTileWidth = serializedObject.FindProperty("TileWidth");
+        allPrefabs = serializedObject.FindProperty("AllPrefabs");
+        groupedPrefabs = serializedObject.FindProperty("GroupedPrefabs");
+    }
+
+
+
+
+
+
+
+
+    private void OnGUI()
+    {
+        InitStyles();
+        serializedObject.Update();
+        mainScroll = EditorGUILayout.BeginScrollView(mainScroll);
+
+
+
+        GUILayout.Space(20);
+        DRAW_HEADER();
+        GUILayout.Space(20);
+
+
+
+        IF_NO_ASSET_FOUND_GUI();
+
+        DATA_AND_REFERENCES_GUI();
+
+        PREFABS_TAB_GUI();
+
+        SHOWING_SELECTED_PREFAB_OR_GROUP();
+
+        
+
+
+
+        EditorGUILayout.EndScrollView();
+        serializedObject.ApplyModifiedProperties();
+    }
+
+
+    private void DRAW_HEADER()
+    {
+        GUIStyle headerStyle = new GUIStyle(EditorStyles.boldLabel)
+        {
+            fontSize = 22,
+            alignment = TextAnchor.MiddleCenter,
+            normal = { textColor = new Color(0.2f, 0.6f, 0.9f) }
+        };
+        GUILayout.Space(10);
+        GUILayout.Label("GRID TILE EDITOR", headerStyle);
+        GUILayout.Space(10);
+        EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+    }
+    private void IF_NO_ASSET_FOUND_GUI()
+    {
+
+        if (serializedObject == null || gridTileData == null)
+        {
+            EditorGUILayout.HelpBox("No GridTileData asset found!", MessageType.Warning);
+
+            if (GUILayout.Button("Create Data Asset"))
+            {
+                gridTileData = ScriptableObject.CreateInstance<GridTileData>();
+                AssetDatabase.CreateAsset(gridTileData, "Assets/All TileMap Editor Assets/ScriptableObjects/GridTileData.asset");
+                AssetDatabase.SaveAssets();
+
+
+                OnEnable(); // reload
+            }
+            gridTileData = (GridTileData)EditorGUILayout.ObjectField(gridTileData, typeof(GridTileData), true);
+            if (gridTileData != null && grid != null)
+            {
+                OnEnable();
+            }
+
+            return;
+        }
+        if (serializedObject == null || gridTileData == null) return;
+        if (grid != null && grid.gridTileData == null)
+        {
+            grid.gridTileData = gridTileData;
+            EditorUtility.SetDirty(grid);
+        }
+
+    }
+    private void DATA_AND_REFERENCES_GUI()
+    {
+        EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+                GUILayout.Space(020);
+            using (new EditorGUILayout.VerticalScope(GUILayout.MaxHeight(40)))
+            {
+                GUILayout.FlexibleSpace();
+                GUILayout.Label("Data", EditorStyles.largeLabel);
+                GUILayout.FlexibleSpace();
+            }
+            using (new GUILayout.VerticalScope())
+            {
+
+                using (new GUILayout.HorizontalScope())
+                {
+                    GUILayout.Label("Asset", GUILayout.Width(40));
+                    gridTileData = (GridTileData)EditorGUILayout.ObjectField(gridTileData, typeof(GridTileData), true);
+                }
+                using (new GUILayout.HorizontalScope())
+                {
+                    GUILayout.Label("Grid", GUILayout.Width(40));
+                    grid = (Grid)EditorGUILayout.ObjectField(grid, typeof(Grid), true);
+                    serializedObject.ApplyModifiedProperties();
+                }
+                if (grid == null)
+                {
+                    if (GUILayout.Button("Create Grid GameObject"))
+                    {
+                        GameObject gridGO = new GameObject("TileGrid");
+                        grid = gridGO.AddComponent<Grid>(); // Adds Unity's Grid Component
+                        Selection.activeObject = gridGO;   // Select it in the hierarchy
+                    }
+                }
+                GUILayout.Space(0);
+            }
+        }
+
+        EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+
+        GUILayout.Space(20);
+        EditorGUILayout.PropertyField(gridYPosProperty);
+        EditorGUILayout.PropertyField(gridTileWidth);
+        GUILayout.Space(20);
+
+    }
+    private void PREFABS_TAB_GUI()
+    {
+
+        GUILayout.Space(10);
+        using (new GUILayout.HorizontalScope())
+        {
+            GUILayout.FlexibleSpace();
+            toShowPrefabSection = GUILayout.Toggle(toShowPrefabSection, " Show Prefab Section", "Button", GUILayout.Width(200));
+            GUILayout.FlexibleSpace();
+        }
+        GUILayout.Space(10);
+
+
+        if (toShowPrefabSection)
+        {
+
+            tabIndex = GUILayout.Toolbar(tabIndex, tabs);
+            GUILayout.BeginVertical(boxStyle);
+
+            if (tabIndex == 0)
+            {
+                //GUILayout.Label("All Prefabs", EditorStyles.boldLabel);
+                GUILayout.Space(15);
+                DrawCenteredLabel("All Prefabs (Drag & Drop)", 14, FontStyle.Bold, new Color(0.455f, 0.345f, 0.546f));
+                GUILayout.Space(15);
+                DrawAllPrefabListElements(allPrefabs, prefabThumbnailSize, ref scrollPos, selectedIndices);
+                currentPrefabList = allPrefabs;
+
+
+                for (int i = 0; i < selectedIndices.Count; i++)
+                {
+                    selectedIndices.Sort();
+                    if (selectedIndices[i] >= gridTileData.AllPrefabs.Count)
+                    {
+                        selectedIndices.RemoveAt(i);
+                    }
+                }
+            }
+            else if (tabIndex == 1)
+            {
+                //GUILayout.Label("Grouped Prefabs", EditorStyles.boldLabel);
+                GUILayout.Space(15);
+                DrawCenteredLabel("Grouped Prefabs (Select Indiv. & Create Group)", 14, FontStyle.Bold, new Color(0.2f, 0.4f, 0.3f));
+                GUILayout.Space(15);
+                DrawGroupedPrefabListElements(groupedPrefabs, prefabThumbnailSize + 50f);
+                currentPrefabList = groupedPrefabs;
+
+                for (int i = 0; i < selectedIndices.Count; i++)
+                {
+                    selectedIndices.Sort();
+                    if (selectedIndices[i] >= gridTileData.GroupedPrefabs.Count)
+                    {
+                        selectedIndices.RemoveAt(i);
+                    }
+                }
+            }
+
+            //GUILayout.Space(5);
+            DrawCenteredLabel($"Selected {selectedIndices.Count}", 8, FontStyle.Normal, new Color(0.7f, 0.7f, 0.7f));
+            GUILayout.Space(5);
+
+            using (new GUILayout.HorizontalScope())
+            {
+
+                using (new GUILayout.HorizontalScope())
+                {
+                    EditorGUILayout.LabelField("Size", GUILayout.Width(30));
+                    prefabThumbnailSize = EditorGUILayout.Slider(prefabThumbnailSize, 20f, 150f);
+                }
+
+                EditorGUI.BeginDisabledGroup(selectedIndices.Count <= 0);
+                using (new GUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("Deselect All", GUILayout.MinWidth(100)))
+                    {
+                        selectedIndices.Clear();
+                    }
+                    if (GUILayout.Button("Delete", GUILayout.MinWidth(100)))
+                    {
+                        DeleteSelectedFromList(currentPrefabList, ref selectedIndices);
+                    }
+                }
+            }
+            using (new GUILayout.HorizontalScope())
+            {
+                newGroupName = EditorGUILayout.TextField(newGroupName);
+                if (GUILayout.Button("Create Group"))
+                {
+                    CreatePrefabGroup(newGroupName, ref selectedIndices);
+                    newGroupName = "New Group";
+                    tabIndex = 1;
+                }
+            }
+            EditorGUI.EndDisabledGroup();
+            GUILayout.EndVertical();
+        }
+    }
+    private void SHOWING_SELECTED_PREFAB_OR_GROUP()
+    {
+        if (selectedIndices != null && selectedIndices.Count > 0)
+        {
+            GUILayout.Space(15);
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+
+            if (tabIndex == 0)
+            {
+                ALL_PREFABS_PROPERTIES_GUI(allPrefabs, ref selectedIndices);
+            }
+            else if (tabIndex == 1)
+            {
+                GROUPED_PREFAB_PROPERTIES_GUI();
+            }
+        }
+    }
+    private void ALL_PREFABS_PROPERTIES_GUI(SerializedProperty prefabList, ref List<int> SelectedIndices, bool forceDraw = false)
+    {
+        if (currentPrefabList != allPrefabs && !forceDraw) return;
+
+
+        if (SelectedIndices.Count > 0)
+        {
+            GUILayout.BeginVertical(boxStyle);
+            GUILayout.Space(15);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                Rect rect = GUILayoutUtility.GetRect(prefabThumbnailSize, prefabThumbnailSize, GUILayout.ExpandWidth(false));
+
+                GameObject prefab = (GameObject)prefabList.GetArrayElementAtIndex(SelectedIndices[0]).FindPropertyRelative("prefab").objectReferenceValue;
+                Texture2D preview = prefab ? AssetPreview.GetAssetPreview(prefab) : Texture2D.grayTexture;
+
+                if (prefab != null && preview != null)
+                {
+                    GUI.Box(rect, GUIContent.none);
+                    GUI.DrawTexture(rect, preview, ScaleMode.ScaleToFit);
+
+                }
+
+                using (new EditorGUILayout.VerticalScope())
+                {
+                    DrawCenteredLabel("Selected Prefab Properties", 20, FontStyle.Bold, new Color(0.145f, 0.346f, 0.655f));
+                    if (prefab != null)
+                    {
+                        //Rect labelRect = new Rect(rect.x, rect.yMax - 16, rect.width, 16);
+                        GUILayout.Label(prefab.name, EditorStyles.centeredGreyMiniLabel);
+                    }
+                }
+            }
+            GUILayout.Space(15);
+            SerializedProperty firstElement = prefabList.GetArrayElementAtIndex(SelectedIndices[0]);
+
+            using (new GUILayout.HorizontalScope())
+            {
+                //GUILayout.Label("Randomize Position", GUILayout.MinWidth(120));
+                EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("randomizePos"));
+            }
+
+            if (firstElement.FindPropertyRelative("randomizePos").boolValue)
+            {
+                GUILayout.BeginVertical(boxStyle);
+                {
+                    EditorGUILayout.LabelField("Randomization Settings", EditorStyles.boldLabel);
+
+                    using (new GUILayout.HorizontalScope())
+                    {
+                        GUILayout.Label("X :");
+                        GUILayout.Label("MinX");
+                        firstElement.FindPropertyRelative("minX").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("minX").floatValue, -.5f, firstElement.FindPropertyRelative("maxX").floatValue);
+                        GUILayout.Label("MaxX");
+                        firstElement.FindPropertyRelative("maxX").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("maxX").floatValue, firstElement.FindPropertyRelative("minX").floatValue, .5f);
+                    }
+                    using (new GUILayout.HorizontalScope())
+                    {
+                        GUILayout.Label("Y :");
+                        GUILayout.Label("MinY");
+                        firstElement.FindPropertyRelative("minY").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("minY").floatValue, -.5f, firstElement.FindPropertyRelative("maxY").floatValue);
+                        GUILayout.Label("MaxY");
+                        firstElement.FindPropertyRelative("maxY").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("maxY").floatValue, firstElement.FindPropertyRelative("minY").floatValue, .5f);
+                    }
+                    using (new GUILayout.HorizontalScope())
+                    {
+                        GUILayout.Label("Z :");
+                        GUILayout.Label("MinZ");
+                        firstElement.FindPropertyRelative("minZ").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("minZ").floatValue, -.5f, firstElement.FindPropertyRelative("maxZ").floatValue);
+                        GUILayout.Label("MaxZ");
+                        firstElement.FindPropertyRelative("maxZ").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("maxZ").floatValue, firstElement.FindPropertyRelative("minZ").floatValue, .5f);
+                    }
+                }
+                EditorGUILayout.EndVertical();
+            }
+
+            using (new GUILayout.HorizontalScope())
+            {
+                GUILayout.Label("No of Prefab to place per Tile");
+                GUILayout.Label("Min :", GUILayout.Width(30));
+                firstElement.FindPropertyRelative("noOfPrefabPerTileMin").intValue = EditorGUILayout.IntField(firstElement.FindPropertyRelative("noOfPrefabPerTileMin").intValue);
+                firstElement.FindPropertyRelative("noOfPrefabPerTileMin").intValue = Mathf.Clamp(firstElement.FindPropertyRelative("noOfPrefabPerTileMin").intValue, 0, 100);
+                GUILayout.Label("Max :", GUILayout.Width(30));
+                firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue = EditorGUILayout.IntField(firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue);
+                firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue = Mathf.Clamp(firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue, 0, 100);
+            }
+
+            if (SelectedIndices == secondSelectedIndices)
+            {
+                SerializedProperty listOfPrefabs = groupedPrefabs.GetArrayElementAtIndex(selectedIndices[0]).FindPropertyRelative("prefabs");
+                SerializedProperty chance = listOfPrefabs.GetArrayElementAtIndex(secondSelectedIndices[0]).FindPropertyRelative("chanceOfSelection");
+                    
+
+                EditorGUILayout.PropertyField(chance, GUILayout.Width(200));
+            }
+
+            GUILayout.EndVertical();
+        }
+
+    }
+    private void GROUPED_PREFAB_PROPERTIES_GUI()
+    {
+        if (currentPrefabList != groupedPrefabs) return;
+        if (selectedIndices.Count == 0) return; // no group selected
+
+        // Get the selected group
+        SerializedProperty selectedGroup = groupedPrefabs.GetArrayElementAtIndex(selectedIndices[0]);
+        SerializedProperty groupName = selectedGroup.FindPropertyRelative("groupName");
+        SerializedProperty subPrefabsArray = selectedGroup.FindPropertyRelative("prefabs");
+
+        GUILayout.BeginVertical(boxStyle);
+
+
+        GUILayout.Space(10);
+
+
+        //groupName.stringValue = EditorGUILayout.TextField("Group Name", groupName.stringValue);
+        DrawCenteredLabel("Selected Group", 20, FontStyle.Bold, new Color(0.455f, 0.545f, 0.246f));
+        GUILayout.Space(10);
+        groupName.stringValue = DrawCenteredTextField(groupName.stringValue, 40, 40, 16);
+
+        GUILayout.Space(10);
+        GUILayout.Label("Prefabs in Group", EditorStyles.boldLabel);
+
+        DrawAllPrefabListElements(subPrefabsArray, prefabThumbnailSize, ref secondScrollPos, secondSelectedIndices); // reuse the existing drawer
+        DrawCenteredLabel($"Selected {secondSelectedIndices.Count}", 8, FontStyle.Normal, new Color(0.7f, 0.7f, 0.7f));
+        GUILayout.Space(5);
+
+
+        EditorGUI.BeginDisabledGroup(selectedIndices.Count <= 0);
+        using (new GUILayout.HorizontalScope())
+        {
+            using (new GUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("Deselect Sub Prefabs", GUILayout.MinWidth(100)))
+                {
+                    secondSelectedIndices.Clear();
+                }
+                if (GUILayout.Button("Remove Sub Prefabs", GUILayout.MinWidth(100)))
+                {
+                    DeleteSelectedFromList(subPrefabsArray, ref secondSelectedIndices);
+                }
+            }
+        }
+        using (new GUILayout.HorizontalScope())
+        {
+            newGroupName = EditorGUILayout.TextField(newGroupName);
+            if (GUILayout.Button("Create Group From Selected Sub Prefabs"))
+            {
+                CreatePrefabGroup(newGroupName, ref secondSelectedIndices);
+                newGroupName = "New Group";
+                tabIndex = 1;
+            }
+        }
+
+        GUILayout.Space(3);
+        using (new GUILayout.HorizontalScope())
+        {
+            GUILayout.FlexibleSpace();
+            toShowSecondLevelPrefabProperties = GUILayout.Toggle(toShowSecondLevelPrefabProperties, " Show Prefab Properties", "Button", GUILayout.Width(200));
+            GUILayout.FlexibleSpace();
+        }
+        GUILayout.Space(3);
+
+        if (toShowSecondLevelPrefabProperties)
+        {
+            for (int i = 0; i < secondSelectedIndices.Count; i++)
+            {
+                secondSelectedIndices.Sort();
+                if (secondSelectedIndices[i] >= gridTileData.GroupedPrefabs[selectedIndices[0]].prefabs.Count)
+                {
+                    secondSelectedIndices.RemoveAt(i);
+                }
+            }
+            ALL_PREFABS_PROPERTIES_GUI(subPrefabsArray, ref secondSelectedIndices, true); // force draw even if not in allPrefabs tab
+        }
+
+        EditorGUI.EndDisabledGroup();
+
+
+        GUILayout.EndVertical();
+    }
+
+
+
+
+    private void CreatePrefabGroup(string name, ref List<int> SELECTEDINDEX)
+    {
+        List<Prefab> prefabs = new ();
+        //List<PrefabPropertiesInsideGroupPrefab> prefabProperties = new ();
+
+        for (int i = 0; i < SELECTEDINDEX.Count; i++)
+        {
+            if (currentPrefabList == allPrefabs)
+                prefabs.Add(new Prefab(gridTileData.AllPrefabs[SELECTEDINDEX[i]]));
+            else if (currentPrefabList == groupedPrefabs && SELECTEDINDEX == this.selectedIndices)
+                CreateGroupFromGroup(SELECTEDINDEX[i]);
+            else if (currentPrefabList == groupedPrefabs && SELECTEDINDEX == this.secondSelectedIndices)
+            {
+                prefabs.Add(new Prefab(gridTileData.GroupedPrefabs[selectedIndices[0]].prefabs[SELECTEDINDEX[i]]));
+            }
+        }
+        GroupedPrefab groupedPrefab = new GroupedPrefab
+        {
+            groupName = name,
+            prefabs = prefabs
+        };
+
+        gridTileData.GroupedPrefabs.Add(groupedPrefab);
+
+        void CreateGroupFromGroup(int index)
+        {
+            for (int i = 0; i < gridTileData.GroupedPrefabs[index].prefabs.Count; i++)
+            {
+                prefabs.Add(new Prefab(gridTileData.GroupedPrefabs[index].prefabs[i]));
+            }
+        }
+    }
+
+    private void DrawAllPrefabListElements(SerializedProperty listProperty, float thumbnailSize, ref Vector2 scrollPos, List<int> selectedIndices)
+    {
+        if (listProperty == null || !listProperty.isArray)
+        {
+            EditorGUILayout.HelpBox("Property is missing or not an array!", MessageType.Error);
+            return;
+        }
+
+        float maxHeight = 200f; // maximum height of the scroll area
+
+        int count = listProperty.arraySize + 1;
+        int columns = Mathf.Max(1, (int)(EditorGUIUtility.currentViewWidth / (thumbnailSize + 10)));
+        int rows = Mathf.CeilToInt((float)count / columns);
+
+        float contentHeight = rows * (thumbnailSize + 10); // how tall it actually needs
+        float viewHeight = Mathf.Min(contentHeight, maxHeight); // shrink-to-fit, but clamp
+
+        // Reserve exactly the height we need (no fixed 200)
+        Rect scrollRect = GUILayoutUtility.GetRect(0, viewHeight, GUILayout.ExpandWidth(true));
+
+        GUIStyle scrollBg = new GUIStyle();
+        scrollBg.normal.background = MakeTex(2, 2, new Color(0.1f, 0.1f, 0.1f, 0.7f));
+        // Draw background box
+        GUI.Box(scrollRect, GUIContent.none, scrollBg);
+
+
+        // Handle drag & drop anywhere in this box
+        HandlePrefabDragAndDrop(listProperty, scrollRect);
+
+        // Begin scroll view inside that rect
+        scrollPos = GUI.BeginScrollView(scrollRect, scrollPos, new Rect(0, 0, scrollRect.width - 20, (thumbnailSize + 10) * rows));
+
+        float x = 5, y = 5;
+
+        for (int row = 0; row < rows; row++)
+        {
+            for (int col = 0; col < columns; col++)
+            {
+                int index = row * columns + col;
+                if (index >= count) break;
+
+                Rect rect = new Rect(x, y, thumbnailSize, thumbnailSize);
+
+                if (index == listProperty.arraySize) /////===== for last element, the "+" button =====/////
+                {
+                    if (GUI.Button(rect, "+"))
+                    {
+                        listProperty.arraySize++;
+                        serializedObject.ApplyModifiedProperties();
+                    }
+                }
+                else
+                {
+                    SerializedProperty element = listProperty.GetArrayElementAtIndex(index);
+                    GameObject prefab = element.FindPropertyRelative("prefab").objectReferenceValue as GameObject;
+                    Texture2D preview = prefab ? AssetPreview.GetAssetPreview(prefab) : Texture2D.grayTexture;
+
+
+                    if (preview != null)
+                        GUI.DrawTexture(rect, preview, ScaleMode.ScaleToFit);
+                    
+                    HandleSelectDeselectMultiSelect(rect, index);
+
+                    Label(prefab, index, rect);
+
+                    // inside DrawPrefabListElements, as the very first lines after the null check:
+                    Event evt = Event.current;
+                    if (evt.type == EventType.KeyDown && (evt.keyCode == KeyCode.Delete)
+                        && EditorWindow.focusedWindow == this) // only when this editor window is focused
+                    {
+                        if (DeleteSelectedFromList(listProperty, ref selectedIndices))
+                        {
+                            evt.Use();
+                            return;
+                        }
+                    }
+
+                    if (rect.Contains(Event.current.mousePosition))
+                    {
+                        EditorGUI.DrawRect(rect, new Color(1f, 1f, 1f, 0.1f));
+                    }
+
+                }
+
+                x += thumbnailSize + 10;
+            }
+
+            x = 5;
+            y += thumbnailSize + 10;
+        }
+
+        GUI.EndScrollView();
+
+
+        //GUILayout.Space(20);
+
+
+        void Label(GameObject prefab, int index, Rect rect)
+        {
+            if (prefab != null && !selectedIndices.Contains(index))
+            {
+                Rect labelRect = new Rect(rect.x, rect.yMax - 16, rect.width, 16);
+                GUI.Label(labelRect, prefab.name, EditorStyles.miniLabel);
+            }
+            else if (prefab != null && selectedIndices.Contains(index))
+            {
+                Rect labelRect = new Rect(rect.x, rect.yMax - 16, rect.width, 16);
+                EditorGUI.DrawRect(rect, new Color(0.2f, 0.4f, 1f, 0.15f));
+
+                GUI.Box(rect, GUIContent.none, EditorStyles.helpBox);
+
+                var style = new GUIStyle(EditorStyles.boldLabel);
+                style.normal.textColor = Color.white;
+                GUI.Label(labelRect, prefab.name, style);
+            }
+
+        }
+
+        void HandleSelectDeselectMultiSelect(Rect rect, int index)
+        {
+
+            if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
+            {
+                if (!Event.current.control && !Event.current.shift)
+                {
+                    selectedIndices.Clear();
+                    if (selectedIndices.Contains(index))
+                        selectedIndices.Remove(index);
+                    else
+                        selectedIndices.Add(index);
+                }
+                if (Event.current.control && !Event.current.shift)
+                {
+                    if (selectedIndices.Contains(index))
+                        selectedIndices.Remove(index);
+                    else
+                        selectedIndices.Add(index);
+                }
+                if (Event.current.shift && selectedIndices.Count > 0)
+                {
+                    int start = selectedIndices[selectedIndices.Count - 1];
+                    int end = index;
+
+                    int min = Mathf.Min(start, end);
+                    int max = Mathf.Max(start, end);
+
+                    for (int i = min; i <= max; i++)
+                    {
+                        if (!selectedIndices.Contains(i))
+                            selectedIndices.Add(i);
+                    }
+                }
+                Event.current.Use();
+            }
+
+        }
+
+        void HandlePrefabDragAndDrop(SerializedProperty listProperty, Rect dropArea)       ///chatgpt///
+        {
+            Event evt = Event.current;
+
+            if ((evt.type == EventType.DragUpdated || evt.type == EventType.DragPerform) && dropArea.Contains(evt.mousePosition))
+            {
+                DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+
+                if (evt.type == EventType.DragPerform)
+                {
+                    DragAndDrop.AcceptDrag();
+
+                    foreach (UnityEngine.Object draggedObject in DragAndDrop.objectReferences)
+                    {
+                        if (draggedObject is GameObject go)
+                        {
+                            int newIndex = listProperty.arraySize;
+                            listProperty.arraySize++;
+                            listProperty.GetArrayElementAtIndex(newIndex).FindPropertyRelative("prefab").objectReferenceValue = go;
+                        }
+                    }
+
+                    serializedObject.ApplyModifiedProperties();
+                }
+
+                evt.Use();
+            }
+        }
+    }
+
+    private void DrawGroupedPrefabListElements(SerializedProperty groupedPrefabs, float thumbnailSize)
+    {
+        if (groupedPrefabs == null || !groupedPrefabs.isArray)
+        {
+            EditorGUILayout.HelpBox("Property is missing or not an array!", MessageType.Error);
+            return;
+        }
+
+        float maxHeight = 200f; // maximum height of the scroll area
+
+        int count = groupedPrefabs.arraySize;
+        int columns = Mathf.Max(1, (int)(EditorGUIUtility.currentViewWidth / (thumbnailSize + 10)));
+        int rows = Mathf.CeilToInt((float)count / columns);
+
+        float contentHeight = rows * (thumbnailSize + 10); // how tall it actually needs
+        float viewHeight = Mathf.Min(contentHeight, maxHeight); // shrink-to-fit, but clamp
+
+        // Reserve exactly the height we need (no fixed 200)
+        Rect scrollRect = GUILayoutUtility.GetRect(0, viewHeight, GUILayout.ExpandWidth(true));
+
+        GUIStyle scrollBg = new GUIStyle();
+        scrollBg.normal.background = MakeTex(2, 2, new Color(0.1f, 0.1f, 0.1f, 0.7f));
+        // Draw background box
+        GUI.Box(scrollRect, GUIContent.none, scrollBg);
+
+
+        // Begin scroll view inside that rect
+        scrollPos = GUI.BeginScrollView(scrollRect, scrollPos, new Rect(0, 0, scrollRect.width - 20, (thumbnailSize + 10) * rows));
+
+        float x = 5, y = 5;
+
+
+        for (int row = 0; row < rows; row++)
+        {
+            for (int col = 0; col < columns; col++)
+            {
+                int index = row * columns + col;
+                if (index >= count) break;
+
+
+                Rect rect = new Rect(x, y, thumbnailSize, thumbnailSize);
+                if (rect.Contains(Event.current.mousePosition)) ///======== highlight on hover =======///
+                {
+                    EditorGUI.DrawRect(rect, new Color(1f, 1f, 1f, 0.1f));
+                }
+
+
+                SerializedProperty element = groupedPrefabs.GetArrayElementAtIndex(index);
+                SerializedProperty prefabsArray = element.FindPropertyRelative("prefabs");
+                int totalPrefabsInGroup = prefabsArray.arraySize;
+
+                GameObject prefab0 = prefabsArray.arraySize > 0 ? prefabsArray.GetArrayElementAtIndex(0).FindPropertyRelative("prefab").objectReferenceValue as GameObject : null;
+                GameObject prefab1 = prefabsArray.arraySize > 1 ? prefabsArray.GetArrayElementAtIndex(1).FindPropertyRelative("prefab").objectReferenceValue as GameObject : null;
+                GameObject prefab2 = prefabsArray.arraySize > 2 ? prefabsArray.GetArrayElementAtIndex(2).FindPropertyRelative("prefab").objectReferenceValue as GameObject : null;
+                GameObject prefab3 = prefabsArray.arraySize > 3 ? prefabsArray.GetArrayElementAtIndex(3).FindPropertyRelative("prefab").objectReferenceValue as GameObject : null;
+
+                Texture2D preview0 = prefab0 ? AssetPreview.GetAssetPreview(prefab0) : Texture2D.grayTexture;
+                Texture2D preview1 = prefab1 ? AssetPreview.GetAssetPreview(prefab1) : Texture2D.blackTexture;
+                Texture2D preview2 = prefab2 ? AssetPreview.GetAssetPreview(prefab2) : Texture2D.blackTexture;
+                Texture2D preview3 = prefab3 ? AssetPreview.GetAssetPreview(prefab3) : null;
+
+                // Divide rect into 4 quadrants
+                float halfW = rect.width / 2f;
+                float halfH = rect.height / 2f;
+
+                Rect topLeft = new Rect(rect.x, rect.y, halfW, halfH);
+                Rect topRight = new Rect(rect.x + halfW, rect.y, halfW, halfH);
+                Rect bottomLeft = new Rect(rect.x, rect.y + halfH, halfW, halfH);
+                Rect bottomRight = new Rect(rect.x + halfW, rect.y + halfH, halfW, halfH);
+                Rect outline = new Rect(rect.x + 1, rect.y + 1, rect.width - 1 , rect.height - 1);
+
+                // Draw previews
+                if (preview0) GUI.DrawTexture(topLeft, preview0, ScaleMode.ScaleToFit);
+                if (preview1) GUI.DrawTexture(topRight, preview1, ScaleMode.ScaleToFit);
+                if (preview2) GUI.DrawTexture(bottomLeft, preview2, ScaleMode.ScaleToFit);
+
+                // Bottom right: either 4th prefab preview or "+N" indicator
+                if (preview3 && totalPrefabsInGroup == 4)
+                {
+                    GUI.DrawTexture(bottomRight, preview3, ScaleMode.ScaleToFit);
+                }
+                else if (prefabsArray.arraySize > 3) // more prefabs exist
+                {
+                    GUI.Box(bottomRight, $"+{prefabsArray.arraySize - 3}", EditorStyles.centeredGreyMiniLabel);
+                }
+                else
+                {
+                    GUI.Box(bottomRight, "^_^", EditorStyles.centeredGreyMiniLabel);
+                }
+
+                GUI.Box(outline, GUIContent.none, EditorStyles.helpBox);
+
+                HandleSelectDeselectMultiSelect(rect, index);
+
+                Label(index, rect);
+
+                Event evt = Event.current;
+                if (evt.type == EventType.KeyDown && (evt.keyCode == KeyCode.Delete)
+                    && EditorWindow.focusedWindow == this) // only when this editor window is focused
+                {
+                    if (DeleteSelectedFromList(groupedPrefabs, ref selectedIndices))
+                    {
+                        evt.Use();
+                        return;
+                    }
+                }
+
+                
+
+                x += thumbnailSize + 10;
+            }
+            x = 5;
+            y += thumbnailSize + 10;
+        }
+
+
+
+
+
+        void HandleSelectDeselectMultiSelect(Rect rect, int index)
+        {
+
+            if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
+            {
+                if (!Event.current.control && !Event.current.shift)
+                {
+                    selectedIndices.Clear();
+                    if (selectedIndices.Contains(index))
+                        selectedIndices.Remove(index);
+                    else
+                        selectedIndices.Add(index);
+                }
+                if (Event.current.control && !Event.current.shift)
+                {
+                    if (selectedIndices.Contains(index))
+                        selectedIndices.Remove(index);
+                    else
+                        selectedIndices.Add(index);
+                }
+                if (Event.current.shift && selectedIndices.Count > 0)
+                {
+                    int start = selectedIndices[selectedIndices.Count - 1];
+                    int end = index;
+
+                    int min = Mathf.Min(start, end);
+                    int max = Mathf.Max(start, end);
+
+                    for (int i = min; i <= max; i++)
+                    {
+                        if (!selectedIndices.Contains(i))
+                            selectedIndices.Add(i);
+                    }
+                }
+                Event.current.Use();
+            }
+
+        }
+
+        void Label(int index, Rect rect)
+        {
+            if (!selectedIndices.Contains(index))
+            {
+                Rect labelRect = new Rect(rect.x, rect.yMax - 16, rect.width, 16);
+                GUI.Label(labelRect, groupedPrefabs.GetArrayElementAtIndex(index).FindPropertyRelative("groupName").stringValue);
+            }
+            else if (selectedIndices.Contains(index))
+            {
+                Rect labelRect = new Rect(rect.x, rect.yMax - 16, rect.width, 16);
+                EditorGUI.DrawRect(rect, new Color(0.2f, 0.4f, 1f, 0.15f));
+
+                var style = new GUIStyle(EditorStyles.boldLabel);
+                style.normal.textColor = Color.white;
+                GUI.Label(labelRect, groupedPrefabs.GetArrayElementAtIndex(index).FindPropertyRelative("groupName").stringValue, style);
+            }
+
+        }
+
+        GUI.EndScrollView();
+    }
+
+    bool DeleteSelectedFromList(SerializedProperty listProperty, ref List<int> selectedIndices)
+    {
+        if (selectedIndices.Count == 0) return false;
+
+        // Sort descending to safely delete from array
+        selectedIndices.Sort((a, b) => b.CompareTo(a));
+
+        foreach (int idx in selectedIndices)
+        {
+            if (idx >= 0 && idx < listProperty.arraySize)
+            {
+                listProperty.DeleteArrayElementAtIndex(idx);
+            }
+        }
+
+        selectedIndices.Clear();
+        serializedObject.ApplyModifiedProperties();
+        return true;
+    }
+
+
+
+    //============= Styling ==============//
+    private void DrawCenteredLabel(string text, int fontSize = 12, FontStyle fontStyle = FontStyle.Normal, Color? color = null)
+    {
+        GUIStyle centeredStyle = new GUIStyle(EditorStyles.label);
+        centeredStyle.alignment = TextAnchor.MiddleCenter;
+        centeredStyle.fontSize = fontSize;
+        centeredStyle.fontStyle = fontStyle;
+        centeredStyle.normal.textColor = color ?? GUI.skin.label.normal.textColor;
+
+        // Use horizontal flexible space to ensure exact centering
+        GUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        GUILayout.Label(text, centeredStyle);
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+    }
+
+    private string DrawCenteredTextField(string text, float width = 200f, float height = 20, int fontSize = 12)
+    {
+        GUIStyle style = new GUIStyle(EditorStyles.textField);
+        style.alignment = TextAnchor.MiddleCenter;
+        style.fontSize = fontSize;
+
+        Rect rect = GUILayoutUtility.GetRect(width, height, GUILayout.ExpandWidth(true));
+        return EditorGUI.TextField(rect, text, style);
+    }
+
+    private GUIStyle boxStyle;
+    private bool stylesInitialized = false;
+    private void InitStyles()
+    {
+        if (stylesInitialized) return; // only once
+        boxStyle = new GUIStyle(GUI.skin.box);
+        boxStyle.padding = new RectOffset(10, 10, 10, 10);
+        boxStyle.margin = new RectOffset(5, 5, 5, 5);
+        boxStyle.normal.background = MakeTex(2, 2, new Color(0.15f, 0.15f, 0.15f, 0.8f));
+        boxStyle.border = new RectOffset(2, 2, 2, 2);
+        stylesInitialized = true;
+    }
+    private Texture2D MakeTex(int width, int height, Color col)
+    {
+        Color[] pix = new Color[width * height];
+        for (int i = 0; i < pix.Length; i++)
+            pix[i] = col;
+        Texture2D result = new Texture2D(width, height);
+        result.SetPixels(pix);
+        result.Apply();
+        return result;
+    }
+
+}
+
+
+
