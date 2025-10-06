@@ -4,8 +4,8 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "GridTileData", menuName = "Scriptable Objects/GridTileData")]
 public class GridTileData : ScriptableObject
 {
-    public float GridYPos = 0f;
-    public float TileWidth = 1f;
+    
+    public Grid grid;
 
     public List<Prefab> AllPrefabs = new List<Prefab>();
     public List<GroupedPrefab> GroupedPrefabs = new List<GroupedPrefab>();
@@ -61,4 +61,15 @@ public class Prefab
     [Tooltip("Higher the value, higher the chance of selection | The value is relative to all the prefabs of only this group prefabs | Actual Chance = chance / Sum of all chance of all prefabs in group")]
     public float chanceOfSelection = 1f;
 
+}
+
+
+public enum BrushMode
+{
+    Single,
+    Multi,
+    Fill,
+    Line,
+    Rectangle,
+    Erase
 }

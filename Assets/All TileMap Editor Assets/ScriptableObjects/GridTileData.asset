@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 910682d254aeafe46b637742837fae25, type: 3}
   m_Name: GridTileData
   m_EditorClassIdentifier: 
-  GridYPos: 6
-  TileWidth: 12.43
+  grid: {fileID: 0}
   AllPrefabs:
   - prefab: {fileID: 919132149155446097, guid: 01dbb489053ed794289b6076533f83a5, type: 3}
     randomizePos: 0

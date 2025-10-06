@@ -11,8 +11,11 @@ public class GridWindow : EditorWindow
 
     [Header("References for Serialized Data")]
     SerializedObject serializedObject;
-    SerializedProperty gridYPosProperty;
-    SerializedProperty gridTileWidth;
+    SerializedObject gridSO;
+    SerializedObject currentLayerSO;
+
+    SerializedProperty gridProp;
+    SerializedProperty layersProp;
     SerializedProperty allPrefabs;
     SerializedProperty groupedPrefabs;
 
@@ -22,13 +25,12 @@ public class GridWindow : EditorWindow
 
     [Header("Properties For Navigating Editor")]
     private Vector2 mainScroll; // ============ Window Scrolllllll ============//
-    bool autoSaveAfterBuild;
 
     [Header("Properties For Navigating Editor - PREFAB SECTION")]
     bool toShowPrefabSection = false;
     private int tabIndex = 0; // 0 = All Prefabs, 1 = Grouped Prefabs
     private string[] tabs = new string[] { "All Prefabs", "Grouped Prefabs" };
-    private List<int> selectedIndices = new(); // ======= List of selected prefab in (all prefabs) and (grouped prefabs) =======//
+    public List<int> selectedIndices = new(); // ======= List of selected prefab in (all prefabs) and (grouped prefabs) =======//
     SerializedProperty currentPrefabList; // ====to keep track of which list is currently being edited (allPrefabs or groupedPrefabs)=====//
     private Vector2 scrollPos;
     
@@ -41,17 +43,9 @@ public class GridWindow : EditorWindow
     [Header("Properties For Navigating Editor - GROUPED PREFABS PROPERTIES")]
     bool toShowSecondLevelPrefabProperties = false;
 
+    [Header("Properties For Navigating Editor - Layers")]
+
     [Header("Properties For Navigating Editor - Brush")]
-    private BrushMode currentBrushMode = BrushMode.Single;
-    private enum BrushMode
-    {
-        Single,
-        Multi,
-        Fill,
-        Line,
-        Rectangle,
-        Erase
-    }
     private Texture2D singleIcon;
     private Texture2D multiIcon;
     private Texture2D fillIcon;
@@ -89,14 +83,28 @@ public class GridWindow : EditorWindow
             return;
         }
         serializedObject = new SerializedObject(gridTileData);
-        gridYPosProperty = serializedObject.FindProperty("GridYPos");
-        gridTileWidth = serializedObject.FindProperty("TileWidth");
         allPrefabs = serializedObject.FindProperty("AllPrefabs");
         groupedPrefabs = serializedObject.FindProperty("GroupedPrefabs");
+        gridProp = serializedObject.FindProperty("grid");
 
+        
         LoadBrushIcons();
     }
-    private void LoadBrushIcons()
+    void ReferenceGrid()
+    {
+        if (grid != null)
+        {
+            grid.gridTileData = gridTileData;
+            gridTileData.grid = grid;
+            gridProp = serializedObject.FindProperty("grid");
+            gridSO = new SerializedObject(grid);
+            layersProp = gridSO.FindProperty("layers");
+            
+            EditorUtility.SetDirty(grid);
+        }
+        serializedObject.ApplyModifiedProperties();
+    }
+    private void LoadBrushIcons()              //TODO
     {
         singleIcon = EditorGUIUtility.IconContent("Prefab Icon").image as Texture2D;
         multiIcon = EditorGUIUtility.IconContent("GameObject Icon").image as Texture2D;
@@ -131,6 +139,10 @@ public class GridWindow : EditorWindow
 
         DATA_AND_REFERENCES_GUI();
 
+        LAYER_MANAGEMENT_GUI();
+
+        DRAW_SELECTED_LAYER_SETTINGS_GUI();
+
         BRUSH_TOOLS_GUI();
 
         PREFABS_TAB_GUI();
@@ -157,7 +169,6 @@ public class GridWindow : EditorWindow
         GUILayout.Space(10);
         GUILayout.Label("GRID TILE EDITOR", headerStyle);
         GUILayout.Space(10);
-        EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
     }
     private void IF_NO_ASSET_FOUND_GUI()
     {
@@ -176,7 +187,7 @@ public class GridWindow : EditorWindow
                 OnEnable(); // reload
             }
             gridTileData = (GridTileData)EditorGUILayout.ObjectField(gridTileData, typeof(GridTileData), true);
-            if (gridTileData != null && grid != null)
+            if (gridTileData != null && gridProp != null)
             {
                 OnEnable();
             }
@@ -184,15 +195,13 @@ public class GridWindow : EditorWindow
             return;
         }
         if (serializedObject == null || gridTileData == null) return;
-        if (grid != null && grid.gridTileData == null)
-        {
-            grid.gridTileData = gridTileData;
-            EditorUtility.SetDirty(grid);
-        }
+        
 
     }
     private void DATA_AND_REFERENCES_GUI()
     {
+        if (gridTileData == null) return;
+
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
 
         using (new EditorGUILayout.HorizontalScope())
@@ -216,6 +225,7 @@ public class GridWindow : EditorWindow
                 {
                     GUILayout.Label("Grid", GUILayout.Width(40));
                     grid = (Grid)EditorGUILayout.ObjectField(grid, typeof(Grid), true);
+                    ReferenceGrid();
                     serializedObject.ApplyModifiedProperties();
                 }
                 if (grid == null)
@@ -224,6 +234,7 @@ public class GridWindow : EditorWindow
                     {
                         GameObject gridGO = new GameObject("TileGrid");
                         grid = gridGO.AddComponent<Grid>(); // Adds Unity's Grid Component
+                        ReferenceGrid();
                         Selection.activeObject = gridGO;   // Select it in the hierarchy
                     }
                 }
@@ -232,12 +243,98 @@ public class GridWindow : EditorWindow
         }
 
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+    }
+    private void LAYER_MANAGEMENT_GUI()
+    {
+        if (grid == null || layersProp == null) return;
 
-        GUILayout.Space(20);
-        EditorGUILayout.PropertyField(gridYPosProperty);
-        EditorGUILayout.PropertyField(gridTileWidth);
-        GUILayout.Space(20);
+        DrawCenteredLabel("Layers", 18, FontStyle.Bold, new Color(0.8f, 0.7f, 0.3f));
+        GUILayout.Space(10);
 
+        int layerCount = layersProp.arraySize;
+        string[] layerTabs = new string[layerCount + 1];
+
+        for (int i = 0; i < layerCount; i++)
+        {
+            layerTabs[i] = $"Layer {i}";
+        }
+        layerTabs[layerCount] = "+"; 
+
+        grid.selectedLayer = GUILayout.Toolbar(grid.selectedLayer, layerTabs);
+
+        if (grid.selectedLayer == layerCount)
+        {
+            CreateNewLayer();
+        }
+
+        GUILayout.Space(5);
+
+
+        void CreateNewLayer()
+        {
+            GameObject layerGO = new GameObject("New Layer");
+            layerGO.transform.parent = grid.transform;
+            Layer layer = layerGO.AddComponent<Layer>();
+
+            layer.Name = "New Layer";
+            layer.grid = grid;
+            layer.gridTileData = gridTileData;
+            
+            grid.layers.Add(layer);
+        }
+    }
+    private void DRAW_SELECTED_LAYER_SETTINGS_GUI()
+    {
+        if (grid == null || layersProp == null || layersProp.arraySize == 0) return;
+
+        if (grid.selectedLayer >= layersProp.arraySize)
+        {
+            grid.selectedLayer = layersProp.arraySize - 1;
+        }
+
+        if (grid.layers[grid.selectedLayer].gameObject.name != grid.layers[grid.selectedLayer].Name)
+        {
+            grid.layers[grid.selectedLayer].gameObject.name = grid.layers[grid.selectedLayer].Name;
+        }
+
+        GUILayout.BeginVertical(boxStyle);
+
+        currentLayerSO = new SerializedObject(grid.layers[grid.selectedLayer]);
+
+        SerializedProperty layerNameProp = currentLayerSO.FindProperty("Name");
+        EditorGUI.BeginDisabledGroup(currentLayerSO.FindProperty("settingsLocked").boolValue);
+        SerializedProperty yPosProp = currentLayerSO.FindProperty("gridYPos");
+        SerializedProperty widthProp = currentLayerSO.FindProperty("tileWidth");
+        EditorGUI.EndDisabledGroup();
+
+        if (yPosProp != null && widthProp != null)
+        {
+            EditorGUILayout.LabelField($"Settings for {layerNameProp.stringValue}", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(layerNameProp);
+            EditorGUILayout.PropertyField(yPosProp, new GUIContent("Grid Y Position"));
+            EditorGUILayout.PropertyField(widthProp, new GUIContent("Tile Width"));
+        }
+        else
+        {
+            EditorGUILayout.HelpBox("Could not find 'gridYPos' or 'tileWidth' properties in the Layer class.", MessageType.Error);
+        }
+        currentLayerSO.ApplyModifiedProperties();
+
+
+        if (GUILayout.Button("Delete This Layer", GUILayout.Height(30)))
+        {
+            if (EditorUtility.DisplayDialog("Delete Layer?", $"Are you sure you want to delete Layer {grid.selectedLayer}?", "Yes", "No"))
+            {
+                DestroyImmediate(grid.layers[grid.selectedLayer].gameObject);
+                grid.layers.RemoveAt(grid.selectedLayer);
+                if (grid.selectedLayer > 0)
+                {
+                    grid.selectedLayer--;
+                }
+            }
+        }
+
+        GUILayout.EndVertical();
     }
     private void BRUSH_TOOLS_GUI()
     {
@@ -255,6 +352,12 @@ public class GridWindow : EditorWindow
             // Brush Mode Selection
             using (new GUILayout.HorizontalScope())
             {
+                if (gridProp.objectReferenceValue == null)
+                {
+                    EditorGUILayout.HelpBox("Assign a Grid to enable brush tools.", MessageType.Info);
+                    return;
+                }
+
                 GUILayout.FlexibleSpace();
 
                 DrawBrushButton(singleIcon, BrushMode.Single, "Place one prefab");
@@ -280,14 +383,15 @@ public class GridWindow : EditorWindow
             style.fixedHeight = 50;
             style.imagePosition = ImagePosition.ImageAbove;
 
-            if (currentBrushMode == mode)
+            if (grid.layers[grid.selectedLayer].currentBrushMode == mode)
             {
                 style.normal.background = Texture2D.grayTexture; // highlight selected
             }
 
             if (GUILayout.Button(new GUIContent(icon, tooltip), style))
             {
-                currentBrushMode = mode;
+                grid.layers[grid.selectedLayer].currentBrushMode = mode;
+                EditorUtility.SetDirty(grid);
             }
         }
     }
@@ -392,7 +496,6 @@ public class GridWindow : EditorWindow
     {
         if (selectedIndices != null && selectedIndices.Count > 0)
         {
-            GUILayout.Space(15);
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
 
             if (tabIndex == 0)
@@ -534,7 +637,7 @@ public class GridWindow : EditorWindow
         GUILayout.Space(5);
 
 
-        EditorGUI.BeginDisabledGroup(selectedIndices.Count <= 0);
+        EditorGUI.BeginDisabledGroup(secondSelectedIndices.Count <= 0);
         using (new GUILayout.HorizontalScope())
         {
             using (new GUILayout.HorizontalScope())
@@ -778,6 +881,12 @@ public class GridWindow : EditorWindow
                 Event.current.Use();
             }
 
+            if (grid != null)
+            {
+                grid.layers[grid.selectedLayer].selectedIndices = selectedIndices;
+                EditorUtility.SetDirty(grid);
+            }
+
         }
 
         void HandlePrefabDragAndDrop(SerializedProperty listProperty, Rect dropArea)       ///chatgpt///
@@ -965,6 +1074,11 @@ public class GridWindow : EditorWindow
                 Event.current.Use();
             }
 
+            if (grid != null)
+            {
+                grid.layers[grid.selectedLayer].selectedIndices = selectedIndices;
+                EditorUtility.SetDirty(grid);
+            }
         }
 
         void Label(int index, Rect rect)
@@ -1007,22 +1121,7 @@ public class GridWindow : EditorWindow
         serializedObject.ApplyModifiedProperties();
         return true;
     }
-    private void BuildLevel()
-    {
-        Debug.Log("Building level with current grid and prefab data...");
-        // TODO: implement your grid prefab instantiation logic here
-    }
-    private void ClearLevel()
-    {
-        Debug.Log("Clearing all instantiated prefabs from the scene...");
-        // TODO: destroy or reset placed prefabs here
-    }
-
-    private void BakeLevel()
-    {
-        Debug.Log("Baking level (combining meshes, setting static flags, etc.)...");
-        // TODO: perform optimization or mesh combining
-    }
+    
 
 
 
