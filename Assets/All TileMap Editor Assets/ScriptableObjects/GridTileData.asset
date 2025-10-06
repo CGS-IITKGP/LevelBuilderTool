@@ -14,727 +14,268 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   grid: {fileID: 0}
   AllPrefabs:
-  - prefab: {fileID: 919132149155446097, guid: 01dbb489053ed794289b6076533f83a5, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: 748a121d012ac764ea5ac04c6fbe2ea8, type: 3}
-    randomizePos: 1
-    minX: -0.24
-    maxX: 0.198
-    minY: 0
-    maxY: 0.168
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 4081982884376404337, guid: 0e0c197b115d55f4f9d24c7ce667f260, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 10
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: 3ffe2e68282014142b5791c526cd727b, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 10
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: ca6ebada5d64fbd428b760b8561dcb54, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: 0ff8e0b52b24dfa4ea69d26a55da9872, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
   - prefab: {fileID: 919132149155446097, guid: 60f41e171d15f2648a1f26e049859e79, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: 3b5dbf3b38122f742adb1d519dc595f1, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: 1b02074e0bd1ee24abe92936dce4c6f9, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: a80e7de902b91dd4dadbef33746392b7, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: 3ffe2e68282014142b5791c526cd727b, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: dfad8593459a4ff49b8af029dec58470, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: b5311bb43e666d54486f2475d23328e0, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: b5311bb43e666d54486f2475d23328e0, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: 01dbb489053ed794289b6076533f83a5, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: 748a121d012ac764ea5ac04c6fbe2ea8, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: fc4a2df4a4c02b74698df422637d7443, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: ca6ebada5d64fbd428b760b8561dcb54, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: 0ff8e0b52b24dfa4ea69d26a55da9872, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: 60f41e171d15f2648a1f26e049859e79, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: 3b5dbf3b38122f742adb1d519dc595f1, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: 1b02074e0bd1ee24abe92936dce4c6f9, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: a80e7de902b91dd4dadbef33746392b7, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: da75017923ff41c44a4f657a4aff242e, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: dfad8593459a4ff49b8af029dec58470, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
-    chanceOfSelection: 0
-  - prefab: {fileID: 919132149155446097, guid: b5311bb43e666d54486f2475d23328e0, type: 3}
-    randomizePos: 0
-    minX: 0
-    maxX: 0
-    minY: 0
-    maxY: 0
-    minZ: 0
-    maxZ: 0
-    noOfPrefabPerTileMin: 0
-    noOfPrefabPerTileMax: 0
+    randomizePosition: 1
+    rangeRandomizationPosition: 1
+    specificPositions:
+    - {x: 0, y: 0, z: 0}
+    positionRange:
+    - {x: 0.6, y: 0.42, z: 0.19}
+    - {x: -0.84, y: -0.4, z: -0.22}
+    randomizeRotation: 1
+    rangeRandomizationRotation: 1
+    specificRotations:
+    - {x: 0, y: 0, z: 0}
+    rotationRange:
+    - {x: 0, y: 0, z: 0}
+    - {x: 0, y: 360, z: 0}
+    randomizeScale: 1
+    scaleRange:
+    - 0.5
+    - 1.2
+    noOfPrefabPerTileMin: 1
+    noOfPrefabPerTileMax: 2
     chanceOfSelection: 0
   GroupedPrefabs:
   - groupName: Chintu
     prefabs:
     - prefab: {fileID: 919132149155446097, guid: 01dbb489053ed794289b6076533f83a5, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 0
       noOfPrefabPerTileMax: 0
       chanceOfSelection: 1
     - prefab: {fileID: 919132149155446097, guid: 748a121d012ac764ea5ac04c6fbe2ea8, type: 3}
-      randomizePos: 1
-      minX: 0.09
-      maxX: 0.198
-      minY: 0
-      maxY: 0.168
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 0
       noOfPrefabPerTileMax: 0
       chanceOfSelection: 2.59
     - prefab: {fileID: 4081982884376404337, guid: 0e0c197b115d55f4f9d24c7ce667f260, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 10
       noOfPrefabPerTileMax: 0
       chanceOfSelection: 0
     - prefab: {fileID: 919132149155446097, guid: 3ffe2e68282014142b5791c526cd727b, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 0
       noOfPrefabPerTileMax: 10
       chanceOfSelection: 0
     - prefab: {fileID: 919132149155446097, guid: ca6ebada5d64fbd428b760b8561dcb54, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 0
       noOfPrefabPerTileMax: 0
       chanceOfSelection: 0
     - prefab: {fileID: 919132149155446097, guid: 0ff8e0b52b24dfa4ea69d26a55da9872, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 0
       noOfPrefabPerTileMax: 0
       chanceOfSelection: 0
     - prefab: {fileID: 919132149155446097, guid: 60f41e171d15f2648a1f26e049859e79, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 0
       noOfPrefabPerTileMax: 0
       chanceOfSelection: 0
     - prefab: {fileID: 919132149155446097, guid: 3b5dbf3b38122f742adb1d519dc595f1, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 0
       noOfPrefabPerTileMax: 0
       chanceOfSelection: 0
     - prefab: {fileID: 919132149155446097, guid: 1b02074e0bd1ee24abe92936dce4c6f9, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 0
       noOfPrefabPerTileMax: 0
       chanceOfSelection: 0
     - prefab: {fileID: 919132149155446097, guid: a80e7de902b91dd4dadbef33746392b7, type: 3}
-      randomizePos: 1
-      minX: -0.375
-      maxX: 0.104
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 1
       noOfPrefabPerTileMax: 1
       chanceOfSelection: 3.22
     - prefab: {fileID: 919132149155446097, guid: 3ffe2e68282014142b5791c526cd727b, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 0
       noOfPrefabPerTileMax: 0
       chanceOfSelection: 0
     - prefab: {fileID: 919132149155446097, guid: dfad8593459a4ff49b8af029dec58470, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 0
       noOfPrefabPerTileMax: 0
       chanceOfSelection: 0
     - prefab: {fileID: 919132149155446097, guid: b5311bb43e666d54486f2475d23328e0, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 0
       noOfPrefabPerTileMax: 0
       chanceOfSelection: 0
     - prefab: {fileID: 919132149155446097, guid: b5311bb43e666d54486f2475d23328e0, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 0
       noOfPrefabPerTileMax: 0
       chanceOfSelection: 0
     - prefab: {fileID: 919132149155446097, guid: 01dbb489053ed794289b6076533f83a5, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 0
       noOfPrefabPerTileMax: 0
       chanceOfSelection: 0
     - prefab: {fileID: 919132149155446097, guid: 748a121d012ac764ea5ac04c6fbe2ea8, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 0
       noOfPrefabPerTileMax: 0
       chanceOfSelection: 0
   - groupName: New Group
     prefabs:
     - prefab: {fileID: 919132149155446097, guid: a80e7de902b91dd4dadbef33746392b7, type: 3}
-      randomizePos: 1
-      minX: -0.375
-      maxX: 0.104
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
+      randomizePosition: 0
+      rangeRandomizationPosition: 0
+      specificPositions: []
+      positionRange: []
+      randomizeRotation: 0
+      rangeRandomizationRotation: 0
+      specificRotations: []
+      rotationRange: []
+      randomizeScale: 0
+      scaleRange: []
       noOfPrefabPerTileMin: 1
       noOfPrefabPerTileMax: 1
       chanceOfSelection: 3.22
-  - groupName: New Group
-    prefabs:
-    - prefab: {fileID: 4081982884376404337, guid: 0e0c197b115d55f4f9d24c7ce667f260, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 10
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: 3ffe2e68282014142b5791c526cd727b, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 10
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: ca6ebada5d64fbd428b760b8561dcb54, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 4.7
-    - prefab: {fileID: 919132149155446097, guid: 0ff8e0b52b24dfa4ea69d26a55da9872, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: 60f41e171d15f2648a1f26e049859e79, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: 3b5dbf3b38122f742adb1d519dc595f1, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: 1b02074e0bd1ee24abe92936dce4c6f9, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: a80e7de902b91dd4dadbef33746392b7, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: 3ffe2e68282014142b5791c526cd727b, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: dfad8593459a4ff49b8af029dec58470, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: b5311bb43e666d54486f2475d23328e0, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-  - groupName: New Group
-    prefabs:
-    - prefab: {fileID: 919132149155446097, guid: b5311bb43e666d54486f2475d23328e0, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: b5311bb43e666d54486f2475d23328e0, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: 01dbb489053ed794289b6076533f83a5, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: 748a121d012ac764ea5ac04c6fbe2ea8, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: fc4a2df4a4c02b74698df422637d7443, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: ca6ebada5d64fbd428b760b8561dcb54, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: 0ff8e0b52b24dfa4ea69d26a55da9872, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: 60f41e171d15f2648a1f26e049859e79, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: 3b5dbf3b38122f742adb1d519dc595f1, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: 1b02074e0bd1ee24abe92936dce4c6f9, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0
-    - prefab: {fileID: 919132149155446097, guid: a80e7de902b91dd4dadbef33746392b7, type: 3}
-      randomizePos: 0
-      minX: 0
-      maxX: 0
-      minY: 0
-      maxY: 0
-      minZ: 0
-      maxZ: 0
-      noOfPrefabPerTileMin: 0
-      noOfPrefabPerTileMax: 0
-      chanceOfSelection: 0

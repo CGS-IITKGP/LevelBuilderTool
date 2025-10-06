@@ -412,6 +412,7 @@ public class GridWindow : EditorWindow
         {
 
             tabIndex = GUILayout.Toolbar(tabIndex, tabs);
+            grid.layers[grid.selectedLayer].prefabTabIndex = tabIndex;
             GUILayout.BeginVertical(boxStyle);
 
             if (tabIndex == 0)

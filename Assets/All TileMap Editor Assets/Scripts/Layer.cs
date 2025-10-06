@@ -14,19 +14,42 @@ public class Layer : MonoBehaviour
     [HideInInspector] public float tileWidth = 1f;
     [HideInInspector] public bool settingsLocked = false;
 
-    [Header("Properties")]
+    [Header("Editor Properties")]
+    public int prefabTabIndex = 0;
     [NonSerialized] public BrushMode currentBrushMode = BrushMode.Single;
     [NonSerialized] public Vector3 currentBrushPosition;
+    [NonSerialized] public Vector3 currentMousePosition;
     [NonSerialized] public List<int> selectedIndices = new();
     [NonSerialized] public List<int> secondSelectedIndices = new();
     [NonSerialized] public List<Prefab> prefabsInUse_Unique = new();
     [NonSerialized] public List<LayerCellData> allPlacedPrefabs_Repeat = new();
+
+
+
+
+
+    public void RegisterPlacedPrefab(GameObject placed, Prefab prefab, Vector3 offsetPos, Quaternion rotation, Vector3 scale)
+    {
+        Vector3 pos = currentBrushPosition;
+        if (!prefabsInUse_Unique.Contains(prefab))
+        {
+            prefabsInUse_Unique.Add(prefab);
+        }
+        LayerCellData cellData = new LayerCellData();
+        cellData.position = pos;
+        cellData.placedPrefabs.Add(new PlacedPrefabData(placed, prefab, offsetPos, rotation, scale));
+        allPlacedPrefabs_Repeat.Add(cellData);
+    }
+
+
+
+
 }
 
 public class LayerCellData
 {
     public Vector3 position;
-    public List<GameObject> placedPrefabs = new();
+    public List<PlacedPrefabData> placedPrefabs = new();
 }
 
 public class PlacedPrefabData

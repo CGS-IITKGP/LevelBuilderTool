@@ -8,32 +8,53 @@ public class Grid : MonoBehaviour
     public int selectedLayer = 0;
 
     //temp
-    public int startX = -10;
-    public int startZ = -10;
-    public int endX = 10;
-    public int endZ = 10;
+    public int startX = -5;
+    public int startZ = -5;
+    public int endX = 5;
+    public int endZ = 5;
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.white;
+        Layer layer = layers[selectedLayer];
+        float tileWidth = layer.tileWidth;
+        float gridY = layer.gridYPos;
+        Vector3 offset = layer.currentBrushPosition - new Vector3(tileWidth / 2f, 0, tileWidth / 2f);
 
-        for (int i = startX; i <= endX; i++)
-        {
-            Vector3 from = new Vector3(i * layers[selectedLayer].tileWidth, layers[selectedLayer].gridYPos, startZ * layers[selectedLayer].tileWidth);
-            Vector3 to = new Vector3(i * layers[selectedLayer].tileWidth, layers[selectedLayer].gridYPos, endZ * layers[selectedLayer].tileWidth);
-            Gizmos.DrawLine(from, to);
-        }
+        // --- Get mouse world position in Scene view ---
+        Vector3 mouseWorldPos = offset;
 
-        for (int j = startZ; j <= endZ; j++)
+        // --- Define fade parameters ---
+        float maxFadeDistance = 5f;   // distance at which lines are fully invisible
+        float minFadeDistance = 1.5f;  // distance for full opacity
+
+        // --- Draw grid lines with fading ---
+        for (int i = startX; i <= endX; i++)
         {
-            Vector3 from = new Vector3(startX * layers[selectedLayer].tileWidth, layers[selectedLayer].gridYPos, j * layers[selectedLayer].tileWidth);
-            Vector3 to = new Vector3(endX * layers[selectedLayer].tileWidth, layers[selectedLayer].gridYPos, j * layers[selectedLayer].tileWidth);
-            Gizmos.DrawLine(from, to);
+            for (int j = startZ; j <= endZ; j++)
+            {
+                Vector3 worldPos = new Vector3(i * tileWidth, gridY, j * tileWidth) + offset;
+                float dist = Vector3.Distance(mouseWorldPos, worldPos);
+
+                // Calculate alpha using inverse lerp
+                float alpha = Mathf.InverseLerp(maxFadeDistance, minFadeDistance, dist);
+                alpha = Mathf.Clamp01(alpha);
+
+                Gizmos.color = new Color(1, 1, 1, alpha);
+
+                // Draw horizontal and vertical lines around this point
+                if (i < endX)
+                {
+                    Vector3 right = new Vector3((i + 1) * tileWidth, gridY, j * tileWidth) + offset;
+                    Gizmos.DrawLine(worldPos, right);
+                }
+
+                if (j < endZ)
+                {
+                    Vector3 forward = new Vector3(i * tileWidth, gridY, (j + 1) * tileWidth) + offset;
+                    Gizmos.DrawLine(worldPos, forward);
+                }
+            }
         }
     }
 
-    public void RegisterPlacedPrefab(GameObject placed)
-    {
-
-    }
 }
