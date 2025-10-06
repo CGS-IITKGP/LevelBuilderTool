@@ -30,29 +30,32 @@ public class Prefab
 {
     public Prefab(Prefab prefabPrev)
     {
-        prefab = prefabPrev.prefab;
-        randomizePos = prefabPrev.randomizePos;
-        minX = prefabPrev.minX;
-        maxX = prefabPrev.maxX;
-        minY = prefabPrev.minY;
-        maxY = prefabPrev.maxY;
-        minZ = prefabPrev.minZ;
-        maxZ = prefabPrev.maxZ;
-        noOfPrefabPerTileMin = prefabPrev.noOfPrefabPerTileMin;
-        noOfPrefabPerTileMax = prefabPrev.noOfPrefabPerTileMax;
-
-        // only for grouping
-        chanceOfSelection = prefabPrev.chanceOfSelection;
+        this.prefab = prefabPrev.prefab;
+        this.randomizePosition = prefabPrev.randomizePosition;
+        this.specificPositions = new List<Vector3>(prefabPrev.specificPositions);
+        this.positionRange = new List<Vector3>(prefabPrev.positionRange);
+        this.randomizeRotation = prefabPrev.randomizeRotation;
+        this.rangeRandomizationPosition = prefabPrev.rangeRandomizationPosition;
+        this.specificRotations = new List<Vector3>(prefabPrev.specificRotations);
+        this.rotationRange = new List<Vector3>(prefabPrev.rotationRange);
+        this.rangeRandomizationRotation = prefabPrev.rangeRandomizationRotation;
+        this.randomizeScale = prefabPrev.randomizeScale;
+        this.scaleRange = new List<float>(prefabPrev.scaleRange);
+        this.noOfPrefabPerTileMin = prefabPrev.noOfPrefabPerTileMin;
+        this.noOfPrefabPerTileMax = prefabPrev.noOfPrefabPerTileMax;
     }
 
     public GameObject prefab;
-    public bool randomizePos = false;
-    public float minX;
-    public float maxX;
-    public float minY;
-    public float maxY;
-    public float minZ;
-    public float maxZ;
+    public bool randomizePosition = false;
+    public bool rangeRandomizationPosition = false;
+    public List<Vector3> specificPositions = new List<Vector3>();
+    public List<Vector3> positionRange = new List<Vector3>(2);
+    public bool randomizeRotation = false;
+    public bool rangeRandomizationRotation = false;
+    public List<Vector3> specificRotations = new List<Vector3>();
+    public List<Vector3> rotationRange = new List<Vector3>(2);
+    public bool randomizeScale = false;
+    public List<float> scaleRange = new List<float>(2) { 1f, 1f };
     public int noOfPrefabPerTileMin = 1;
     public int noOfPrefabPerTileMax = 1;
 

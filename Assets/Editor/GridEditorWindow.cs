@@ -547,41 +547,94 @@ public class GridWindow : EditorWindow
             using (new GUILayout.HorizontalScope())
             {
                 //GUILayout.Label("Randomize Position", GUILayout.MinWidth(120));
-                EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("randomizePos"));
+                EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("randomizePosition"));
             }
 
-            if (firstElement.FindPropertyRelative("randomizePos").boolValue)
+            if (firstElement.FindPropertyRelative("randomizePosition").boolValue)
             {
                 GUILayout.BeginVertical(boxStyle);
                 {
-                    EditorGUILayout.LabelField("Randomization Settings", EditorStyles.boldLabel);
-
-                    using (new GUILayout.HorizontalScope())
+                    EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("rangeRandomizationPosition"), new GUIContent("Range Randomization"));
+                    if (firstElement.FindPropertyRelative("rangeRandomizationPosition").boolValue)
                     {
-                        GUILayout.Label("X :");
-                        GUILayout.Label("MinX");
-                        firstElement.FindPropertyRelative("minX").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("minX").floatValue, -.5f, firstElement.FindPropertyRelative("maxX").floatValue);
-                        GUILayout.Label("MaxX");
-                        firstElement.FindPropertyRelative("maxX").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("maxX").floatValue, firstElement.FindPropertyRelative("minX").floatValue, .5f);
+                        EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("positionRange"));
+                        if (firstElement.FindPropertyRelative("positionRange").arraySize < 2 || firstElement.FindPropertyRelative("positionRange").arraySize > 2)
+                        {
+                            firstElement.FindPropertyRelative("positionRange").arraySize = 2;
+                        }
                     }
-                    using (new GUILayout.HorizontalScope())
+                    else
                     {
-                        GUILayout.Label("Y :");
-                        GUILayout.Label("MinY");
-                        firstElement.FindPropertyRelative("minY").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("minY").floatValue, -.5f, firstElement.FindPropertyRelative("maxY").floatValue);
-                        GUILayout.Label("MaxY");
-                        firstElement.FindPropertyRelative("maxY").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("maxY").floatValue, firstElement.FindPropertyRelative("minY").floatValue, .5f);
+                        EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("specificPositions"));
+                        if (firstElement.FindPropertyRelative("specificPositions").arraySize < 1)
+                        {
+                            firstElement.FindPropertyRelative("specificPositions").arraySize = 1;
+                        }
                     }
-                    using (new GUILayout.HorizontalScope())
-                    {
-                        GUILayout.Label("Z :");
-                        GUILayout.Label("MinZ");
-                        firstElement.FindPropertyRelative("minZ").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("minZ").floatValue, -.5f, firstElement.FindPropertyRelative("maxZ").floatValue);
-                        GUILayout.Label("MaxZ");
-                        firstElement.FindPropertyRelative("maxZ").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("maxZ").floatValue, firstElement.FindPropertyRelative("minZ").floatValue, .5f);
-                    }
+                    // using (new GUILayout.HorizontalScope())
+                    // {
+                    //     GUILayout.Label("X :");
+                    //     GUILayout.Label("MinX");
+                    //     firstElement.FindPropertyRelative("minX").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("minX").floatValue, -.5f, firstElement.FindPropertyRelative("maxX").floatValue);
+                    //     GUILayout.Label("MaxX");
+                    //     firstElement.FindPropertyRelative("maxX").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("maxX").floatValue, firstElement.FindPropertyRelative("minX").floatValue, .5f);
+                    // }
+                    // using (new GUILayout.HorizontalScope())
+                    // {
+                    //     GUILayout.Label("Y :");
+                    //     GUILayout.Label("MinY");
+                    //     firstElement.FindPropertyRelative("minY").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("minY").floatValue, -.5f, firstElement.FindPropertyRelative("maxY").floatValue);
+                    //     GUILayout.Label("MaxY");
+                    //     firstElement.FindPropertyRelative("maxY").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("maxY").floatValue, firstElement.FindPropertyRelative("minY").floatValue, .5f);
+                    // }
+                    // using (new GUILayout.HorizontalScope())
+                    // {
+                    //     GUILayout.Label("Z :");
+                    //     GUILayout.Label("MinZ");
+                    //     firstElement.FindPropertyRelative("minZ").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("minZ").floatValue, -.5f, firstElement.FindPropertyRelative("maxZ").floatValue);
+                    //     GUILayout.Label("MaxZ");
+                    //     firstElement.FindPropertyRelative("maxZ").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("maxZ").floatValue, firstElement.FindPropertyRelative("minZ").floatValue, .5f);
+                    // }
                 }
                 EditorGUILayout.EndVertical();
+            }
+
+            EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("randomizeRotation"));
+
+            if (firstElement.FindPropertyRelative("randomizeRotation").boolValue)
+            {
+            GUILayout.BeginVertical(boxStyle);
+                EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("rangeRandomizationRotation"), new GUIContent("Range Randomization"));
+                if (firstElement.FindPropertyRelative("rangeRandomizationRotation").boolValue)
+                {
+                    EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("rotationRange"));
+                    if (firstElement.FindPropertyRelative("rotationRange").arraySize < 2 || firstElement.FindPropertyRelative("rotationRange").arraySize > 2)
+                    {
+                        firstElement.FindPropertyRelative("rotationRange").arraySize = 2;
+                    }
+                }
+                else
+                {
+                    EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("specificRotations"));
+                    if (firstElement.FindPropertyRelative("specificRotations").arraySize < 1)
+                    {
+                        firstElement.FindPropertyRelative("specificRotations").arraySize = 1;
+                    }
+                }   
+            GUILayout.EndVertical();
+            }
+
+            EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("randomizeScale"));
+
+            if (firstElement.FindPropertyRelative("randomizeScale").boolValue)
+            {
+            GUILayout.BeginVertical(boxStyle);
+                EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("scaleRange"));
+                if (firstElement.FindPropertyRelative("scaleRange").arraySize < 2 || firstElement.FindPropertyRelative("scaleRange").arraySize > 2)
+                {
+                    firstElement.FindPropertyRelative("scaleRange").arraySize = 2;
+                }
+            GUILayout.EndVertical();
             }
 
             using (new GUILayout.HorizontalScope())
@@ -593,6 +646,11 @@ public class GridWindow : EditorWindow
                 GUILayout.Label("Max :", GUILayout.Width(30));
                 firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue = EditorGUILayout.IntField(firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue);
                 firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue = Mathf.Clamp(firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue, 0, 100);
+
+                if (firstElement.FindPropertyRelative("noOfPrefabPerTileMin").intValue > firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue)
+                {
+                    firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue = firstElement.FindPropertyRelative("noOfPrefabPerTileMin").intValue;
+                }
             }
 
             if (SelectedIndices == secondSelectedIndices)
