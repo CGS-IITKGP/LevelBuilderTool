@@ -17,6 +17,10 @@ public class GroupedPrefab
 {
     public string groupName;
     public List<Prefab> prefabs;
+    [Tooltip("How many Prefab to select from group")] 
+    public int noOFDiffPrefabPerTile = 1;
+    [Tooltip("Assuming 2 Prefab selected, Each one is to be placed 3 times, so total is 6 prefab of two type per tile, but this limit it by to a max value.")]
+    public int maxNoOfAllPrefabsPerTile = 5;
     //public List<PrefabPropertiesInsideGroupPrefab> prefabPropertiesInsideGroupPrefabs;
 }
 

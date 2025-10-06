@@ -19,7 +19,7 @@ public class Layer : MonoBehaviour
     [NonSerialized] public BrushMode currentBrushMode = BrushMode.Single;
     [NonSerialized] public Vector3 currentBrushPosition;
     [NonSerialized] public Vector3 currentMousePosition;
-    [NonSerialized] public List<int> selectedIndices = new();
+    /*[NonSerialized]*/ public List<int> selectedIndices = new();
     [NonSerialized] public List<int> secondSelectedIndices = new();
     [NonSerialized] public List<Prefab> prefabsInUse_Unique = new();
     [NonSerialized] public List<LayerCellData> allPlacedPrefabs_Repeat = new();
@@ -34,6 +34,15 @@ public class Layer : MonoBehaviour
         if (!prefabsInUse_Unique.Contains(prefab))
         {
             prefabsInUse_Unique.Add(prefab);
+        }
+
+        for (int i = 0; i < allPlacedPrefabs_Repeat.Count; i++)
+        {
+            if (allPlacedPrefabs_Repeat[i].position == pos) 
+            {
+                allPlacedPrefabs_Repeat[i].placedPrefabs.Add(new PlacedPrefabData(placed, prefab, offsetPos, rotation, scale));
+                return;
+            }
         }
         LayerCellData cellData = new LayerCellData();
         cellData.position = pos;

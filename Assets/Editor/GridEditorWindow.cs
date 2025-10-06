@@ -676,6 +676,8 @@ public class GridWindow : EditorWindow
         SerializedProperty selectedGroup = groupedPrefabs.GetArrayElementAtIndex(selectedIndices[0]);
         SerializedProperty groupName = selectedGroup.FindPropertyRelative("groupName");
         SerializedProperty subPrefabsArray = selectedGroup.FindPropertyRelative("prefabs");
+        SerializedProperty noOfDiffPrefabPerTile = selectedGroup.FindPropertyRelative("noOFDiffPrefabPerTile");
+        SerializedProperty maxNoOfAllPrefabsPerTile = selectedGroup.FindPropertyRelative("maxNoOfAllPrefabsPerTile");
 
         GUILayout.BeginVertical(boxStyle);
 
@@ -687,6 +689,10 @@ public class GridWindow : EditorWindow
         DrawCenteredLabel("Selected Group", 20, FontStyle.Bold, new Color(0.455f, 0.545f, 0.246f));
         GUILayout.Space(10);
         groupName.stringValue = DrawCenteredTextField(groupName.stringValue, 40, 40, 16);
+        EditorGUILayout.PropertyField(noOfDiffPrefabPerTile, new GUIContent("No of Different Prefab to select per Tile"));
+        noOfDiffPrefabPerTile.intValue = Mathf.Clamp(noOfDiffPrefabPerTile.intValue, 1, subPrefabsArray.arraySize);
+        EditorGUILayout.PropertyField(maxNoOfAllPrefabsPerTile, new GUIContent("Max No of All Prefab to place per Tile"));
+        maxNoOfAllPrefabsPerTile.intValue = Mathf.Clamp(maxNoOfAllPrefabsPerTile.intValue, 1, int.MaxValue);
 
         GUILayout.Space(10);
         GUILayout.Label("Prefabs in Group", EditorStyles.boldLabel);
@@ -785,7 +791,7 @@ public class GridWindow : EditorWindow
             }
         }
     }
-    private void DrawAllPrefabListElements(SerializedProperty listProperty, float thumbnailSize, ref Vector2 scrollPos, List<int> selectedIndices)
+    private void DrawAllPrefabListElements(SerializedProperty listProperty, float thumbnailSize, ref Vector2 scrollPos, List<int> selectedIndicesRef)
     {
         if (listProperty == null || !listProperty.isArray)
         {
@@ -855,7 +861,7 @@ public class GridWindow : EditorWindow
                     if (evt.type == EventType.KeyDown && (evt.keyCode == KeyCode.Delete)
                         && EditorWindow.focusedWindow == this) // only when this editor window is focused
                     {
-                        if (DeleteSelectedFromList(listProperty, ref selectedIndices))
+                        if (DeleteSelectedFromList(listProperty, ref selectedIndicesRef))
                         {
                             evt.Use();
                             return;
@@ -884,12 +890,12 @@ public class GridWindow : EditorWindow
 
         void Label(GameObject prefab, int index, Rect rect)
         {
-            if (prefab != null && !selectedIndices.Contains(index))
+            if (prefab != null && !selectedIndicesRef.Contains(index))
             {
                 Rect labelRect = new Rect(rect.x, rect.yMax - 16, rect.width, 16);
                 GUI.Label(labelRect, prefab.name, EditorStyles.miniLabel);
             }
-            else if (prefab != null && selectedIndices.Contains(index))
+            else if (prefab != null && selectedIndicesRef.Contains(index))
             {
                 Rect labelRect = new Rect(rect.x, rect.yMax - 16, rect.width, 16);
                 EditorGUI.DrawRect(rect, new Color(0.2f, 0.4f, 1f, 0.15f));
@@ -910,22 +916,22 @@ public class GridWindow : EditorWindow
             {
                 if (!Event.current.control && !Event.current.shift)
                 {
-                    selectedIndices.Clear();
-                    if (selectedIndices.Contains(index))
-                        selectedIndices.Remove(index);
+                    selectedIndicesRef.Clear();
+                    if (selectedIndicesRef.Contains(index))
+                        selectedIndicesRef.Remove(index);
                     else
-                        selectedIndices.Add(index);
+                        selectedIndicesRef.Add(index);
                 }
                 if (Event.current.control && !Event.current.shift)
                 {
-                    if (selectedIndices.Contains(index))
-                        selectedIndices.Remove(index);
+                    if (selectedIndicesRef.Contains(index))
+                        selectedIndicesRef.Remove(index);
                     else
-                        selectedIndices.Add(index);
+                        selectedIndicesRef.Add(index);
                 }
-                if (Event.current.shift && selectedIndices.Count > 0)
+                if (Event.current.shift && selectedIndicesRef.Count > 0)
                 {
-                    int start = selectedIndices[selectedIndices.Count - 1];
+                    int start = selectedIndicesRef[selectedIndicesRef.Count - 1];
                     int end = index;
 
                     int min = Mathf.Min(start, end);
@@ -933,17 +939,20 @@ public class GridWindow : EditorWindow
 
                     for (int i = min; i <= max; i++)
                     {
-                        if (!selectedIndices.Contains(i))
-                            selectedIndices.Add(i);
+                        if (!selectedIndicesRef.Contains(i))
+                            selectedIndicesRef.Add(i);
                     }
                 }
                 Event.current.Use();
             }
 
-            if (grid != null)
+            if (tabIndex == 0)
             {
-                grid.layers[grid.selectedLayer].selectedIndices = selectedIndices;
-                EditorUtility.SetDirty(grid);
+                if (grid != null)
+                {
+                    grid.layers[grid.selectedLayer].selectedIndices = selectedIndicesRef;
+                    EditorUtility.SetDirty(grid);
+                }
             }
 
         }

@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEditor;
 using UnityEngine;
 
@@ -121,7 +122,7 @@ public class LayerEditor : Editor
                     return;
 
                 ////========= All Prefab Settings =========//
-                
+
                 if (allPrefab.prefab == null)
                     return;
 
@@ -131,9 +132,119 @@ public class LayerEditor : Editor
                     PlacePrefab(allPrefab);
                 }
             }
-            if (isGrouped && (groupedPrefab == null || groupedPrefab.prefabs.Count == 0))
-                return;
+            else
+            {
+                if (isGrouped && (groupedPrefab == null || groupedPrefab.prefabs.Count == 0))
+                    return;
 
+                List<int> selectedPrefabsIndecies = GetWeightedRandomIndices(groupedPrefab);
+                List<int> amountPerPrefab = new List<int>();
+
+                int totalAmount = 0;
+
+                for (int i = 0; i < selectedPrefabsIndecies.Count; i++)
+                {
+                    int amount = UnityEngine.Random.Range(groupedPrefab.prefabs[selectedPrefabsIndecies[i]].noOfPrefabPerTileMin, groupedPrefab.prefabs[selectedPrefabsIndecies[i]].noOfPrefabPerTileMax + 1);
+                    amountPerPrefab.Add(amount);
+                    totalAmount += amount;
+                }
+                Debug.Log($"total amount: {totalAmount}");
+
+                ReduceToMaxAmountPerTile(ref amountPerPrefab, ref totalAmount);
+                Debug.Log($"selectedPrefabsIndecies: {selectedPrefabsIndecies.Count}");
+                foreach (var item in amountPerPrefab)
+                {
+                    Debug.Log($"amountPerPrefab: {item}");
+                }
+
+                for (int i = 0; i < selectedPrefabsIndecies.Count; i++)
+                {
+                    Prefab prefab = groupedPrefab.prefabs[selectedPrefabsIndecies[i]];
+                    if (prefab.prefab == null)
+                        return;
+
+                    for (int j = 0; j < amountPerPrefab[i]; j++)
+                    {
+                        PlacePrefab(prefab);
+                    }
+                }
+            }
+
+            List<int> GetWeightedRandomIndices(GroupedPrefab groupedPrefab)
+            {
+                int noOfDiffPrefabPerTile = groupedPrefab.noOFDiffPrefabPerTile;
+                if (noOfDiffPrefabPerTile > groupedPrefab.prefabs.Count)
+                    noOfDiffPrefabPerTile = groupedPrefab.prefabs.Count;
+
+                List<int> selectedPrefabsIndecies = new List<int>();
+                List<int> allPrefabsIndecies = new List<int>();
+
+                for (int i = 0; i < groupedPrefab.prefabs.Count; i++)
+                {
+                    allPrefabsIndecies.Add(i);
+                }
+
+                float totalChance = 0;
+                for (int i = 0; i < allPrefabsIndecies.Count; i++)
+                {
+                    totalChance += groupedPrefab.prefabs[allPrefabsIndecies[i]].chanceOfSelection;
+                }
+
+                while (selectedPrefabsIndecies.Count < noOfDiffPrefabPerTile)
+                {
+                    if (totalChance <= 0f)
+                    {
+                        int randomIndex = UnityEngine.Random.Range(0, allPrefabsIndecies.Count);
+                        selectedPrefabsIndecies.Add(allPrefabsIndecies[randomIndex]);
+                        allPrefabsIndecies.Remove(randomIndex);
+                        continue;
+                    }
+
+                    float randomPoint = UnityEngine.Random.value * totalChance;
+                    float cumulative = 0f;
+                    for (int i = 0; i < allPrefabsIndecies.Count; i++)
+                    {
+                        var prefab = groupedPrefab.prefabs[allPrefabsIndecies[i]];
+                        cumulative += prefab.chanceOfSelection;
+
+                        if (randomPoint <= cumulative)
+                        {
+                            selectedPrefabsIndecies.Add(allPrefabsIndecies[i]);
+                            totalChance -= prefab.chanceOfSelection;
+                            allPrefabsIndecies.Remove(i);
+                            break;
+                        }
+                    }
+                }
+
+                return selectedPrefabsIndecies;
+            }
+
+            void ReduceToMaxAmountPerTile(ref List<int> amountPerPrefab, ref int totalAmount)
+            {
+
+                if (totalAmount > groupedPrefab.maxNoOfAllPrefabsPerTile)
+                {
+                    int reductionAmount = totalAmount - groupedPrefab.maxNoOfAllPrefabsPerTile;
+
+                    while (reductionAmount > 0)
+                    {
+                        int randomIndex = UnityEngine.Random.Range(0, totalAmount);
+                        int cumulative = 0;
+                        for (int i = 0; i < amountPerPrefab.Count; i++)
+                        {
+                            cumulative += amountPerPrefab[i];
+                            if (randomIndex <= cumulative)
+                            {
+                                amountPerPrefab[i]--;
+                                reductionAmount--;
+                                totalAmount--;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
 
         }
 

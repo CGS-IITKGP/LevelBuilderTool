@@ -461,7 +461,8 @@ MonoBehaviour:
   gridYPos: 0
   tileWidth: 1
   settingsLocked: 0
-  prefabTabIndex: 0
+  prefabTabIndex: 1
+  selectedIndices: 00000000
 --- !u!4 &954682566
 Transform:
   m_ObjectHideFlags: 0
