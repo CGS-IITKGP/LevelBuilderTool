@@ -1,7 +1,5 @@
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,11 +8,15 @@ public class LayerEditor : Editor
 {
     Event e;
     Layer layer;
+    Ray mouseRay;
 
     private void OnSceneGUI()
     {
         e = Event.current;
         layer = (Layer)target;
+
+        if (layer.grid.windowFocused == false)
+            return;
 
         GET_MOUSE_POSITION(layer);
 
@@ -33,19 +35,20 @@ public class LayerEditor : Editor
     private void GET_MOUSE_POSITION(Layer layer)
     {
 
-        Ray ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
+        mouseRay = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
 
-        Plane groundPlane = new Plane(Vector3.up, new Vector3(0, layer.gridYPos, 0));
+        layer.finalYPos = layer.gridYPos + layer.noOfIncrements * layer.gridYIncrement;
+        Plane groundPlane = new Plane(Vector3.up, new Vector3(0, layer.finalYPos, 0));
 
-        if (groundPlane.Raycast(ray, out float distance))
+        if (groundPlane.Raycast(mouseRay, out float distance))
         {
-            Vector3 hitPoint = ray.GetPoint(distance);
+            Vector3 hitPoint = mouseRay.GetPoint(distance);
             layer.currentMousePosition = hitPoint;
 
             int snappedX = Mathf.FloorToInt(hitPoint.x / layer.tileWidth);
             int snappedZ = Mathf.FloorToInt(hitPoint.z / layer.tileWidth);
 
-            Vector3 snappedPosition = new(snappedX * layer.tileWidth + layer.tileWidth / 2, layer.gridYPos, snappedZ * layer.tileWidth + layer.tileWidth / 2);
+            Vector3 snappedPosition = new(snappedX * layer.tileWidth + layer.tileWidth / 2, layer.finalYPos, snappedZ * layer.tileWidth + layer.tileWidth / 2);
             layer.currentBrushPosition = snappedPosition;
 
             CheckOverlap();
@@ -59,26 +62,35 @@ public class LayerEditor : Editor
 
     private void CheckOverlap()
     {
-        for (int i = 0; i < layer.allPlacedPrefabs_Repeat.Count; i++)
-        {
-            if (layer.allPlacedPrefabs_Repeat[i].position == layer.currentBrushPosition)
-            {
-                Handles.color = new Color(1, 0, 0, 0.3f);
-                Handles.CubeHandleCap(0, layer.currentBrushPosition + new Vector3(0, layer.tileWidth / 2, 0), Quaternion.identity, layer.tileWidth, EventType.Repaint);
-                break;
-            }
-        }
+        //for (int i = 0; i < layer.perCellData_s.Count; i++)
+        //{
+        //    if (layer.perCellData_s[i].position == layer.currentBrushPosition)
+        //    {
+        //        Vector3 mouseDir = mouseRay.direction;
+
+        //        List<float> components = new List<float> { Mathf.Abs(mouseDir.x), Mathf.Abs(mouseDir.y), Mathf.Abs(mouseDir.z) };
+        //        int maxComponentIndex = components.IndexOf(Mathf.Max(components.ToArray()));
+
+        //        break;
+        //    }
+        //}
     }
 
     private void HANDLE_CLICK(Event e, Layer layer)
     {
         if (e.type == EventType.MouseDown && e.button == 0)
         {
+            if (!layer.settingsLocked)
+            {
+                Debug.LogWarning("Layer Settings must be locked to paint.");
+                return;
+            }
             //  ========== BRUSH MODE SINGLE ==========//
             if (layer.currentBrushMode == BrushMode.Single)
             {
                 PlaceSinglePrefab();
                 e.Use();
+                EditorWindow.FocusWindowIfItsOpen<GridWindow>();
             }
             //  ========== BRUSH MODE MULTI ==========//
             if (layer.currentBrushMode == BrushMode.Multi)
@@ -90,11 +102,30 @@ public class LayerEditor : Editor
 
         if (e.type == EventType.MouseDown && e.button == 1)
         {
-            if (layer.currentBrushMode == BrushMode.Single)
+            if (!layer.settingsLocked)
             {
-                RemovePrefab();
-                e.Use();
+                Debug.LogWarning("Layer Settings must be locked to paint.");
+                return;
             }
+
+            EraseSinglePrefab();
+        }
+
+        if (!layer.settingsLocked) return;
+
+        if (e.type == EventType.ScrollWheel)
+        {
+            float scrollDelta = e.delta.y;
+
+            if (scrollDelta > 0)
+            {
+                layer.noOfIncrements--;
+            }
+            else if (scrollDelta < 0)
+            {
+                layer.noOfIncrements++;
+            }
+            e.Use();
         }
 
 
@@ -103,6 +134,12 @@ public class LayerEditor : Editor
         {
             if (layer.gridTileData == null || layer.gridTileData.AllPrefabs.Count == 0)
                 return;
+
+            if (layer.selectedIndices.Count == 0)
+            {
+                Debug.LogWarning("No Prefab Selected");
+                return;
+            }
 
             Prefab allPrefab = null;
             GroupedPrefab groupedPrefab = null;
@@ -129,7 +166,7 @@ public class LayerEditor : Editor
                 int noOfPrefabPerTile = UnityEngine.Random.Range(allPrefab.noOfPrefabPerTileMin, allPrefab.noOfPrefabPerTileMax + 1);
                 for (int i = 0; i < noOfPrefabPerTile; i++)
                 {
-                    PlacePrefab(allPrefab);
+                    InstantiatePrefab(allPrefab);
                 }
             }
             else
@@ -137,7 +174,7 @@ public class LayerEditor : Editor
                 if (isGrouped && (groupedPrefab == null || groupedPrefab.prefabs.Count == 0))
                     return;
 
-                List<int> selectedPrefabsIndecies = GetWeightedRandomIndices(groupedPrefab);
+                List<int> selectedPrefabsIndecies = GetWeightedRandomIndices(ref groupedPrefab);
                 List<int> amountPerPrefab = new List<int>();
 
                 int totalAmount = 0;
@@ -148,14 +185,9 @@ public class LayerEditor : Editor
                     amountPerPrefab.Add(amount);
                     totalAmount += amount;
                 }
-                Debug.Log($"total amount: {totalAmount}");
 
-                ReduceToMaxAmountPerTile(ref amountPerPrefab, ref totalAmount);
-                Debug.Log($"selectedPrefabsIndecies: {selectedPrefabsIndecies.Count}");
-                foreach (var item in amountPerPrefab)
-                {
-                    Debug.Log($"amountPerPrefab: {item}");
-                }
+                ReduceToMaxAmountPerTile(ref amountPerPrefab, ref totalAmount, ref groupedPrefab);
+                
 
                 for (int i = 0; i < selectedPrefabsIndecies.Count; i++)
                 {
@@ -165,105 +197,96 @@ public class LayerEditor : Editor
 
                     for (int j = 0; j < amountPerPrefab[i]; j++)
                     {
-                        PlacePrefab(prefab);
+                        InstantiatePrefab(prefab);
                     }
                 }
             }
 
-            List<int> GetWeightedRandomIndices(GroupedPrefab groupedPrefab)
-            {
-                int noOfDiffPrefabPerTile = groupedPrefab.noOFDiffPrefabPerTile;
-                if (noOfDiffPrefabPerTile > groupedPrefab.prefabs.Count)
-                    noOfDiffPrefabPerTile = groupedPrefab.prefabs.Count;
+            
 
-                List<int> selectedPrefabsIndecies = new List<int>();
-                List<int> allPrefabsIndecies = new List<int>();
-
-                for (int i = 0; i < groupedPrefab.prefabs.Count; i++)
-                {
-                    allPrefabsIndecies.Add(i);
-                }
-
-                float totalChance = 0;
-                for (int i = 0; i < allPrefabsIndecies.Count; i++)
-                {
-                    totalChance += groupedPrefab.prefabs[allPrefabsIndecies[i]].chanceOfSelection;
-                }
-
-                while (selectedPrefabsIndecies.Count < noOfDiffPrefabPerTile)
-                {
-                    if (totalChance <= 0f)
-                    {
-                        int randomIndex = UnityEngine.Random.Range(0, allPrefabsIndecies.Count);
-                        selectedPrefabsIndecies.Add(allPrefabsIndecies[randomIndex]);
-                        allPrefabsIndecies.Remove(randomIndex);
-                        continue;
-                    }
-
-                    float randomPoint = UnityEngine.Random.value * totalChance;
-                    float cumulative = 0f;
-                    for (int i = 0; i < allPrefabsIndecies.Count; i++)
-                    {
-                        var prefab = groupedPrefab.prefabs[allPrefabsIndecies[i]];
-                        cumulative += prefab.chanceOfSelection;
-
-                        if (randomPoint <= cumulative)
-                        {
-                            selectedPrefabsIndecies.Add(allPrefabsIndecies[i]);
-                            totalChance -= prefab.chanceOfSelection;
-                            allPrefabsIndecies.Remove(i);
-                            break;
-                        }
-                    }
-                }
-
-                return selectedPrefabsIndecies;
-            }
-
-            void ReduceToMaxAmountPerTile(ref List<int> amountPerPrefab, ref int totalAmount)
-            {
-
-                if (totalAmount > groupedPrefab.maxNoOfAllPrefabsPerTile)
-                {
-                    int reductionAmount = totalAmount - groupedPrefab.maxNoOfAllPrefabsPerTile;
-
-                    while (reductionAmount > 0)
-                    {
-                        int randomIndex = UnityEngine.Random.Range(0, totalAmount);
-                        int cumulative = 0;
-                        for (int i = 0; i < amountPerPrefab.Count; i++)
-                        {
-                            cumulative += amountPerPrefab[i];
-                            if (randomIndex <= cumulative)
-                            {
-                                amountPerPrefab[i]--;
-                                reductionAmount--;
-                                totalAmount--;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+            
 
         }
+    }
 
-        void RemovePrefab()
+
+    List<int> GetWeightedRandomIndices(ref GroupedPrefab groupedPrefab)
+    {
+        int noOfDiffPrefabPerTile = groupedPrefab.noOFDiffPrefabPerTile;
+        if (noOfDiffPrefabPerTile > groupedPrefab.prefabs.Count)
+            noOfDiffPrefabPerTile = groupedPrefab.prefabs.Count;
+
+        List<int> selectedPrefabsIndecies = new List<int>();
+        List<int> allPrefabsIndecies = new List<int>();
+
+        for (int i = 0; i < groupedPrefab.prefabs.Count; i++)
         {
-            Collider[] hits = Physics.OverlapSphere(layer.currentBrushPosition, layer.tileWidth / 3f);
-            foreach (Collider hit in hits)
+            allPrefabsIndecies.Add(i);
+        }
+
+        float totalChance = 0;
+        for (int i = 0; i < allPrefabsIndecies.Count; i++)
+        {
+            totalChance += groupedPrefab.prefabs[allPrefabsIndecies[i]].chanceOfSelection;
+        }
+
+        while (selectedPrefabsIndecies.Count < noOfDiffPrefabPerTile)
+        {
+            if (totalChance <= 0f)
             {
-                if (hit.transform.IsChildOf(layer.transform))
+                int randomIndex = UnityEngine.Random.Range(0, allPrefabsIndecies.Count);
+                selectedPrefabsIndecies.Add(allPrefabsIndecies[randomIndex]);
+                allPrefabsIndecies.Remove(randomIndex);
+                continue;
+            }
+
+            float randomPoint = UnityEngine.Random.value * totalChance;
+            float cumulative = 0f;
+            for (int i = 0; i < allPrefabsIndecies.Count; i++)
+            {
+                var prefab = groupedPrefab.prefabs[allPrefabsIndecies[i]];
+                cumulative += prefab.chanceOfSelection;
+
+                if (randomPoint <= cumulative)
                 {
-                    Undo.DestroyObjectImmediate(hit.gameObject);
-                    //grid.placedPrefabs.Remove(hit.gameObject);
+                    selectedPrefabsIndecies.Add(allPrefabsIndecies[i]);
+                    totalChance -= prefab.chanceOfSelection;
+                    allPrefabsIndecies.Remove(i);
                     break;
+                }
+            }
+        }
+
+        return selectedPrefabsIndecies;
+    }
+
+    void ReduceToMaxAmountPerTile(ref List<int> amountPerPrefab, ref int totalAmount, ref GroupedPrefab groupedPrefab)
+    {
+
+        if (totalAmount > groupedPrefab.maxNoOfAllPrefabsPerTile)
+        {
+            int reductionAmount = totalAmount - groupedPrefab.maxNoOfAllPrefabsPerTile;
+
+            while (reductionAmount > 0)
+            {
+                int randomIndex = UnityEngine.Random.Range(0, totalAmount);
+                int cumulative = 0;
+                for (int i = 0; i < amountPerPrefab.Count; i++)
+                {
+                    cumulative += amountPerPrefab[i];
+                    if (randomIndex <= cumulative)
+                    {
+                        amountPerPrefab[i]--;
+                        reductionAmount--;
+                        totalAmount--;
+                        break;
+                    }
                 }
             }
         }
     }
 
-    private void PlacePrefab(Prefab prefab)
+    private void InstantiatePrefab(Prefab prefab)
     {
         // randomize position
         Vector3 pos = layer.currentBrushPosition;
@@ -335,5 +358,93 @@ public class LayerEditor : Editor
 
         layer.RegisterPlacedPrefab(placed, prefab, offsetPos, rot, new Vector3(scale, scale, scale));
         Undo.RegisterCreatedObjectUndo(placed, "Placed Prefab");
+    }
+
+    private void EraseSinglePrefab()
+    {
+        layer.EraseSinglePrefab();
+    }
+
+
+
+
+
+
+
+
+
+    /// <summary>
+    /// =====================CHAT GPT CODE TO KEEP FOCUS ON WINDOW AFTER NAVIGATION========================== ///
+    /// </summary>
+    private bool wasNavigating = false;
+
+    [MenuItem("Window/Grid Window")]
+    public static void ShowWindow()
+    {
+        EditorWindow.GetWindow<GridWindow>("Grid Window");
+    }
+
+    private void OnEnable()
+    {
+        // Keep listening even if SceneView has focus
+        SceneView.duringSceneGui += OnSceneGUI;
+    }
+
+    private void OnDisable()
+    {
+        SceneView.duringSceneGui -= OnSceneGUI;
+    }
+
+    private void OnSceneGUI(SceneView sceneView)
+    {
+        Event e = Event.current;
+
+        // Detect start of right-click or middle-click
+        if (e.type == EventType.MouseDown && (e.button == 1 || e.button == 2))
+        {
+            wasNavigating = true;
+        }
+
+        // Detect release of right-click or middle-click
+        if (e.type == EventType.MouseUp && (e.button == 1 || e.button == 2))
+        {
+            if (wasNavigating)
+            {
+                wasNavigating = false;
+
+                // Delay focus until after Unity finishes processing navigation
+                EditorApplication.delayCall += () =>
+                {
+                    // Make sure window still exists
+                    var window = EditorWindow.GetWindow<GridWindow>();
+                    if (window != null)
+                    {
+                        window.Focus();
+                        window.Repaint();
+                    }
+                };
+            }
+        }
+    }
+
+
+
+    [InitializeOnLoadMethod]
+    static void EnableSceneFocus()   // chat GPT //
+    {
+        SceneView.duringSceneGui += (sceneView) =>
+        {
+            Event e = Event.current;
+
+            if (e.type == EventType.MouseUp && e.button == 1)
+            {
+                // Automatically refocus GridWindow when done rotating/panning
+                var window = EditorWindow.GetWindow<GridWindow>();
+                if (window != null)
+                {
+                    EditorApplication.delayCall += () => window.Focus();
+                }
+            }
+        };
     }
 }

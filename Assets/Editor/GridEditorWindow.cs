@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class GridWindow : EditorWindow
 {
@@ -292,27 +293,65 @@ public class GridWindow : EditorWindow
             grid.selectedLayer = layersProp.arraySize - 1;
         }
 
+        if (grid.layers[grid.selectedLayer] == null)
+        {
+            layersProp.DeleteArrayElementAtIndex(grid.selectedLayer);
+            grid.layers.RemoveAt(grid.selectedLayer);
+            grid.selectedLayer = Mathf.Clamp(grid.selectedLayer - 1, 0, layersProp.arraySize - 1);
+            return;
+        }
+
         if (grid.layers[grid.selectedLayer].gameObject.name != grid.layers[grid.selectedLayer].Name)
         {
             grid.layers[grid.selectedLayer].gameObject.name = grid.layers[grid.selectedLayer].Name;
         }
 
-        GUILayout.BeginVertical(boxStyle);
+        if (EditorWindow.focusedWindow == this)
+        {
+            Selection.activeGameObject = grid.layers[grid.selectedLayer].gameObject;
+            grid.windowFocused = true;
+        }else
+        {
+            grid.windowFocused = false;
+        }
+
+            GUILayout.BeginVertical(boxStyle);
 
         currentLayerSO = new SerializedObject(grid.layers[grid.selectedLayer]);
 
         SerializedProperty layerNameProp = currentLayerSO.FindProperty("Name");
-        EditorGUI.BeginDisabledGroup(currentLayerSO.FindProperty("settingsLocked").boolValue);
         SerializedProperty yPosProp = currentLayerSO.FindProperty("gridYPos");
+        SerializedProperty yIncrement = currentLayerSO.FindProperty("gridYIncrement");
+        SerializedProperty noOfIncrement = currentLayerSO.FindProperty("noOfIncrements");
         SerializedProperty widthProp = currentLayerSO.FindProperty("tileWidth");
-        EditorGUI.EndDisabledGroup();
+        SerializedProperty settingsLocked = currentLayerSO.FindProperty("settingsLocked");
 
         if (yPosProp != null && widthProp != null)
         {
             EditorGUILayout.LabelField($"Settings for {layerNameProp.stringValue}", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(layerNameProp);
+            EditorGUI.BeginDisabledGroup(currentLayerSO.FindProperty("settingsLocked").boolValue);
             EditorGUILayout.PropertyField(yPosProp, new GUIContent("Grid Y Position"));
-            EditorGUILayout.PropertyField(widthProp, new GUIContent("Tile Width"));
+            EditorGUILayout.PropertyField(yIncrement, new GUIContent("Y Increment"));
+            EditorGUILayout.PropertyField(widthProp, new GUIContent("Tile Width")); 
+            
+            EditorGUILayout.BeginVertical();
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Apply", GUILayout.Width(60)))
+            {
+                settingsLocked.boolValue = true;
+            }
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+            if (!settingsLocked.boolValue)
+                EditorGUILayout.HelpBox("You will not be able to Change after Applying this Setting", MessageType.Warning);
+            EditorGUILayout.EndVertical();
+            
+            EditorGUI.EndDisabledGroup();
+            if (settingsLocked.boolValue)
+                EditorGUILayout.PropertyField(noOfIncrement, new GUIContent("No of Increments"));
+
         }
         else
         {
@@ -391,7 +430,7 @@ public class GridWindow : EditorWindow
             if (GUILayout.Button(new GUIContent(icon, tooltip), style))
             {
                 grid.layers[grid.selectedLayer].currentBrushMode = mode;
-                EditorUtility.SetDirty(grid);
+                //EditorUtility.SetDirty(grid);
             }
         }
     }
@@ -856,7 +895,6 @@ public class GridWindow : EditorWindow
 
                     Label(prefab, index, rect);
 
-                    // inside DrawPrefabListElements, as the very first lines after the null check:
                     Event evt = Event.current;
                     if (evt.type == EventType.KeyDown && (evt.keyCode == KeyCode.Delete)
                         && EditorWindow.focusedWindow == this) // only when this editor window is focused
@@ -951,7 +989,7 @@ public class GridWindow : EditorWindow
                 if (grid != null)
                 {
                     grid.layers[grid.selectedLayer].selectedIndices = selectedIndicesRef;
-                    EditorUtility.SetDirty(grid);
+                    //EditorUtility.SetDirty(grid);
                 }
             }
 
@@ -1145,7 +1183,7 @@ public class GridWindow : EditorWindow
             if (grid != null)
             {
                 grid.layers[grid.selectedLayer].selectedIndices = selectedIndices;
-                EditorUtility.SetDirty(grid);
+                //EditorUtility.SetDirty(grid);
             }
         }
 

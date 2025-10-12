@@ -11,6 +11,8 @@ public class Layer : MonoBehaviour
     [Header("Layer Settings")]
     public string Name = "New Layer";
     [HideInInspector] public float gridYPos = 0f;
+    [HideInInspector] public float finalYPos = 0f;
+    [HideInInspector] public float gridYIncrement = 1f;
     [HideInInspector] public float tileWidth = 1f;
     [HideInInspector] public bool settingsLocked = false;
 
@@ -18,11 +20,13 @@ public class Layer : MonoBehaviour
     public int prefabTabIndex = 0;
     [NonSerialized] public BrushMode currentBrushMode = BrushMode.Single;
     [NonSerialized] public Vector3 currentBrushPosition;
-    [NonSerialized] public Vector3 currentMousePosition;
-    /*[NonSerialized]*/ public List<int> selectedIndices = new();
-    [NonSerialized] public List<int> secondSelectedIndices = new();
-    [NonSerialized] public List<Prefab> prefabsInUse_Unique = new();
-    [NonSerialized] public List<LayerCellData> allPlacedPrefabs_Repeat = new();
+    public int noOfIncrements;
+    /*[NonSerialized] */  public Vector3 currentMousePosition;
+    /*[NonSerialized] */  public List<int> selectedIndices = new();
+    /*[NonSerialized] */  public List<int> secondSelectedIndices = new();
+    /*[NonSerialized] */  public List<Prefab> allUniquePrefabsInUse = new();
+    /*[NonSerialized] */  public List<LayerYLevel> layerData = new();
+
 
 
 
@@ -31,36 +35,92 @@ public class Layer : MonoBehaviour
     public void RegisterPlacedPrefab(GameObject placed, Prefab prefab, Vector3 offsetPos, Quaternion rotation, Vector3 scale)
     {
         Vector3 pos = currentBrushPosition;
-        if (!prefabsInUse_Unique.Contains(prefab))
+        if (!allUniquePrefabsInUse.Contains(prefab))
         {
-            prefabsInUse_Unique.Add(prefab);
+            allUniquePrefabsInUse.Add(prefab);
         }
 
-        for (int i = 0; i < allPlacedPrefabs_Repeat.Count; i++)
+        PlacedPrefabData newPlaced = new PlacedPrefabData(placed, prefab, offsetPos, rotation, scale);
+
+        AddPrefabToLayerData(newPlaced);
+
+        void AddPrefabToLayerData(PlacedPrefabData newPlaced)
         {
-            if (allPlacedPrefabs_Repeat[i].position == pos) 
+            int yIndex = Mathf.RoundToInt((finalYPos - gridYPos) / gridYIncrement);
+            for (int i = 0; i < layerData.Count; i++)
             {
-                allPlacedPrefabs_Repeat[i].placedPrefabs.Add(new PlacedPrefabData(placed, prefab, offsetPos, rotation, scale));
-                return;
+                if (layerData[i].yIndex == yIndex)
+                {
+                    for (int j = 0; j < layerData[i].cells.Count; j++)
+                    {
+                        if (layerData[i].cells[j].position == pos)
+                        {
+                            layerData[i].cells[j].placedPrefabs.Add(newPlaced);
+                            return;
+                        }
+                    }
+                    LayerCellData cellData = new LayerCellData();
+                    cellData.position = pos;
+                    cellData.placedPrefabs.Add(newPlaced);
+                    layerData[i].cells.Add(cellData);
+                    return;
+                }
             }
+            LayerCellData newCellData = new LayerCellData();
+            newCellData.position = pos;
+            newCellData.placedPrefabs.Add(newPlaced);
+            LayerYLevel newYLevel = new LayerYLevel();
+            newYLevel.yIndex = yIndex;
+            newYLevel.cells.Add(newCellData);
+            layerData.Add(newYLevel);
         }
-        LayerCellData cellData = new LayerCellData();
-        cellData.position = pos;
-        cellData.placedPrefabs.Add(new PlacedPrefabData(placed, prefab, offsetPos, rotation, scale));
-        allPlacedPrefabs_Repeat.Add(cellData);
     }
 
 
+    public void EraseSinglePrefab()
+    {
+        for (int i = 0; i < layerData[noOfIncrements].cells.Count; i++)
+        {
+            if (layerData[noOfIncrements].cells[i].position == currentBrushPosition)
+            {
+                if (layerData[noOfIncrements].cells[i].placedPrefabs.Count > 0)
+                {
+                    var placedPrefabs = layerData[noOfIncrements].cells[i].placedPrefabs;
+                    for (int j = placedPrefabs.Count - 1; j >= 0; j--)
+                    {
+                        if (placedPrefabs[j].placedPrefab != null)
+                        {
+                            DestroyImmediate(placedPrefabs[j].placedPrefab);
+                        }
+                        placedPrefabs.RemoveAt(j);
+                    }
 
-
+                    if (layerData[noOfIncrements].cells[i].placedPrefabs.Count == 0)
+                    {
+                        layerData[noOfIncrements].cells.RemoveAt(i);
+                    }
+                }
+                return;
+            }
+        }
+    }
 }
 
+[System.Serializable]
+public class LayerYLevel
+{
+    public int yIndex;
+    public List<LayerCellData> cells = new();
+}
+
+[System.Serializable]
 public class LayerCellData
 {
     public Vector3 position;
     public List<PlacedPrefabData> placedPrefabs = new();
 }
 
+[System.Serializable]
 public class PlacedPrefabData
 {
     public GameObject placedPrefab;
