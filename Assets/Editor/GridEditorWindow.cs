@@ -101,7 +101,7 @@ public class GridWindow : EditorWindow
             gridSO = new SerializedObject(grid);
             layersProp = gridSO.FindProperty("layers");
             
-            EditorUtility.SetDirty(grid);
+            //EditorUtility.SetDirty(grid);
         }
         serializedObject.ApplyModifiedProperties();
     }

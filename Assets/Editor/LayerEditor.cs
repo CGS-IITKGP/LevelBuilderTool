@@ -10,19 +10,7 @@ public class LayerEditor : Editor
     Layer layer;
     Ray mouseRay;
     bool leftMouseHeldDown;
-
-    private void OnSceneGUI()
-    {
-        e = Event.current;
-        layer = (Layer)target;
-
-        if (layer.grid.windowFocused == false)
-            return;
-
-        GET_MOUSE_POSITION(layer);
-
-        HANDLE_CLICK(e, layer);
-    }
+    private Vector3 lastBrushPosition = Vector3.positiveInfinity;
 
 
 
@@ -56,7 +44,12 @@ public class LayerEditor : Editor
 
             Handles.CubeHandleCap(0, snappedPosition + new Vector3(0, layer.tileWidth / 2, 0), Quaternion.identity, layer.tileWidth, EventType.Repaint);
 
-            SceneView.RepaintAll();
+            if (layer.currentBrushPosition != lastBrushPosition)
+            {
+                lastBrushPosition = layer.currentBrushPosition;
+                SceneView.RepaintAll();
+            }
+
         }
         void CheckOverlap()
         {
@@ -78,11 +71,15 @@ public class LayerEditor : Editor
 
     private void HANDLE_CLICK(Event e, Layer layer)
     {
-        if (e.type == EventType.MouseDown && e.button == 0)
+        if (e.button == 0 && e.type == EventType.MouseDrag)
         {
             leftMouseHeldDown = true;
                 e.Use();
+        } else 
+        {
+            leftMouseHeldDown = false;
         }
+
         if (leftMouseHeldDown || (e.type == EventType.MouseDown && e.button == 0))
         {
             if (!layer.settingsLocked)
@@ -103,10 +100,14 @@ public class LayerEditor : Editor
             }
         }
 
-        if (e.type == EventType.MouseUp && e.button == 0)
-        {
-            leftMouseHeldDown = false;
-        }
+        //if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.R)
+        //{
+        //    Debug.Log("Refreshing All References (R pressed)");
+        //    layer.RefreshAllReferences();
+        //    Event.current.Use();
+        //    SceneView.RepaintAll();
+        //}
+
 
 
         if (!layer.settingsLocked) return;
@@ -115,11 +116,11 @@ public class LayerEditor : Editor
         {
             float scrollDelta = e.delta.y;
 
-            if (scrollDelta > 0)
+            if (scrollDelta < 0)
             {
                 layer.noOfIncrements--;
             }
-            else if (scrollDelta < 0)
+            else if (scrollDelta > 0)
             {
                 layer.noOfIncrements++;
             }
@@ -149,6 +150,9 @@ public class LayerEditor : Editor
                     return;
                 }
             }
+
+
+            Undo.RecordObject(layer, "Register Placed Prefab");
 
             Prefab allPrefab = null;
             GroupedPrefab groupedPrefab = null;
@@ -226,6 +230,7 @@ public class LayerEditor : Editor
             return;
         }
 
+        Undo.RecordObject(layer, "Erase Placed Prefab");
         layer.EraseSinglePrefab();
     }
 
@@ -379,6 +384,49 @@ public class LayerEditor : Editor
         Undo.RegisterCreatedObjectUndo(placed, "Placed Prefab");
     }
 
+    private void OnEnable()
+    {
+        EditorApplication.hierarchyChanged += OnHierarchyChanged;
+    }
+
+    private void OnDisable()
+    {
+        EditorApplication.hierarchyChanged -= OnHierarchyChanged;
+    }
+
+    private void OnHierarchyChanged()
+    {
+        if (layer == null || layer.gameObject == null)
+            return;
+
+        if (!layer.gameObject.scene.IsValid())
+            return;
+
+        foreach (Transform child in layer.transform)
+        {
+            if (child == null)
+            {
+                TriggerLayerRefresh("Child removed or deleted");
+                return;
+            }
+        }
+
+        int childCount = layer.transform.childCount;
+        if (lastChildCount != childCount)
+        {
+            lastChildCount = childCount;
+            TriggerLayerRefresh("Child count changed (added/removed prefab)");
+        }
+    }
+
+    private int lastChildCount = -1;
+
+    private void TriggerLayerRefresh(string reason)
+    {
+        //Debug.Log($"Hierarchy changed under Layer ({reason}) — refreshing references.");
+        layer.RefreshAllReferences();
+        SceneView.RepaintAll();
+    }
 
 
 
@@ -404,19 +452,17 @@ public class LayerEditor : Editor
         EditorWindow.GetWindow<GridWindow>("Grid Window");
     }
 
-    private void OnEnable()
+    private void OnSceneGUI()
     {
-        SceneView.duringSceneGui += OnSceneGUI;
-    }
+        e = Event.current;
+        layer = (Layer)target;
 
-    private void OnDisable()
-    {
-        SceneView.duringSceneGui -= OnSceneGUI;
-    }
+        if (layer.grid.windowFocused == false)
+            return;
 
-    private void OnSceneGUI(SceneView sceneView)
-    {
-        Event e = Event.current;
+        GET_MOUSE_POSITION(layer);
+
+        HANDLE_CLICK(e, layer);
 
         // --- Mouse Down ---
         if (e.type == EventType.MouseDown)

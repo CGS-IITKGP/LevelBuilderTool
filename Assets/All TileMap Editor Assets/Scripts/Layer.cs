@@ -130,6 +130,11 @@ public class Layer : MonoBehaviour
             {
                 YthLayer.cells.Remove(removingCell);
             }
+
+            if (YthLayer.cells.Count == 0)
+            {
+                layerData.Remove(YthLayer);
+            }
         }
 
         return;
@@ -141,11 +146,54 @@ public class Layer : MonoBehaviour
             if (uniquePrefab != null)
             {
                 uniquePrefab.count--;
-                uniquePrefab.cellsUsingThisPrefab.Remove(removingCell);
+                if (removingCell.placedPrefabs.Find(p => p.prefabData == placedPrefabData.prefabData) == null)
+                    uniquePrefab.cellsUsingThisPrefab.Remove(removingCell);
                 if (uniquePrefab.count <= 0)
                 {
                     allUniquePrefabsInUse.Remove(uniquePrefab);
                 }
+            }
+        }
+    }
+
+    public void RefreshAllReferences()
+    {
+        for (int i = 0; i < layerData.Count; i++)
+        {
+            for (int j = 0; j < layerData[i].cells.Count; j++)
+            {
+                for (int k = layerData[i].cells[j].placedPrefabs.Count - 1; k >= 0; k--)
+                {
+                    if (layerData[i].cells[j].placedPrefabs[k].placedPrefab == null)
+                    {
+                        var prefabData = layerData[i].cells[j].placedPrefabs[k].prefabData;
+                        var cellData = layerData[i].cells[j];
+                        layerData[i].cells[j].placedPrefabs.RemoveAt(k);
+
+                        var uniquePrefab = allUniquePrefabsInUse.Find(unique => unique.prefab == prefabData);
+                        if (uniquePrefab != null)
+                        {
+                            uniquePrefab.count--;
+                            if (cellData.placedPrefabs.Find(p => p.prefabData == prefabData) == null)
+                                uniquePrefab.cellsUsingThisPrefab.Remove(cellData);
+
+                            if (uniquePrefab.count <= 0)
+                            {
+                                allUniquePrefabsInUse.Remove(uniquePrefab);
+                            }
+                        }
+                    }
+                }
+                if (layerData[i].cells[j].placedPrefabs.Count == 0)
+                {
+                    layerData[i].cells.RemoveAt(j);
+                    j--;
+                }
+            }
+            if (layerData[i].cells.Count == 0)
+            {
+                layerData.RemoveAt(i);
+                i--;
             }
         }
     }

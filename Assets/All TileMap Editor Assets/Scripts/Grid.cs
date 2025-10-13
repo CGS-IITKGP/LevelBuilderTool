@@ -51,7 +51,10 @@ public class Grid : MonoBehaviour
                 for (int j = startZ; j <= endZ; j++)
                 {
                     Vector3 worldPos = new Vector3(i * tileWidth, gridY, j * tileWidth) + offset;
-                    float dist = Vector3.Distance(mouseWorldPos, worldPos);
+
+                    var newPos = mouseWorldPos;
+                    newPos.y = worldPos.y;
+                    float dist = Vector3.Distance(newPos, worldPos);
 
                     // Calculate alpha using inverse lerp
                     float alpha = Mathf.InverseLerp(maxFadeDistance, minFadeDistance, dist);
