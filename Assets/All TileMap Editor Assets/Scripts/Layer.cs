@@ -24,7 +24,7 @@ public class Layer : MonoBehaviour
     /*[NonSerialized] */  public Vector3 currentMousePosition;
     /*[NonSerialized] */  public List<int> selectedIndices = new();
     /*[NonSerialized] */  public List<int> secondSelectedIndices = new();
-    /*[NonSerialized] */  public List<Prefab> allUniquePrefabsInUse = new();
+    /*[NonSerialized] */  public List<UniquePrefabData> allUniquePrefabsInUse = new();
     /*[NonSerialized] */  public List<LayerYLevel> layerData = new();
 
 
@@ -35,16 +35,14 @@ public class Layer : MonoBehaviour
     public void RegisterPlacedPrefab(GameObject placed, Prefab prefab, Vector3 offsetPos, Quaternion rotation, Vector3 scale)
     {
         Vector3 pos = currentBrushPosition;
-        if (!allUniquePrefabsInUse.Contains(prefab))
-        {
-            allUniquePrefabsInUse.Add(prefab);
-        }
 
         PlacedPrefabData newPlaced = new PlacedPrefabData(placed, prefab, offsetPos, rotation, scale);
 
-        AddPrefabToLayerData(newPlaced);
+        LayerCellData cellData = AddPrefabToLayerData(newPlaced);
 
-        void AddPrefabToLayerData(PlacedPrefabData newPlaced)
+        AddUniquePrefabData(prefab, cellData);
+
+        LayerCellData AddPrefabToLayerData(PlacedPrefabData newPlaced)
         {
             int yIndex = Mathf.RoundToInt((finalYPos - gridYPos) / gridYIncrement);
             for (int i = 0; i < layerData.Count; i++)
@@ -56,14 +54,14 @@ public class Layer : MonoBehaviour
                         if (layerData[i].cells[j].position == pos)
                         {
                             layerData[i].cells[j].placedPrefabs.Add(newPlaced);
-                            return;
+                            return layerData[i].cells[j];
                         }
                     }
                     LayerCellData cellData = new LayerCellData();
                     cellData.position = pos;
                     cellData.placedPrefabs.Add(newPlaced);
                     layerData[i].cells.Add(cellData);
-                    return;
+                    return cellData;
                 }
             }
             LayerCellData newCellData = new LayerCellData();
@@ -73,34 +71,81 @@ public class Layer : MonoBehaviour
             newYLevel.yIndex = yIndex;
             newYLevel.cells.Add(newCellData);
             layerData.Add(newYLevel);
+            return newCellData;
+        }
+
+        void AddUniquePrefabData(Prefab prefab, LayerCellData cellData)
+        {
+            for (int i = 0; i < allUniquePrefabsInUse.Count; i++)
+            {
+                if (allUniquePrefabsInUse[i].prefab == prefab)
+                {
+                    allUniquePrefabsInUse[i].count++;
+                    if (!allUniquePrefabsInUse[i].cellsUsingThisPrefab.Contains(cellData))
+                    {
+                        allUniquePrefabsInUse[i].cellsUsingThisPrefab.Add(cellData);
+                    }
+                    return;
+                }
+            }
+            UniquePrefabData newUnique = new UniquePrefabData(prefab, 1);
+            newUnique.cellsUsingThisPrefab.Add(cellData);
+            allUniquePrefabsInUse.Add(newUnique);
         }
     }
 
 
     public void EraseSinglePrefab()
     {
-        for (int i = 0; i < layerData[noOfIncrements].cells.Count; i++)
+        var YthLayer = layerData[0];
+        for (int i = 0; i < layerData.Count; i++)
         {
-            if (layerData[noOfIncrements].cells[i].position == currentBrushPosition)
+            if (layerData[i].yIndex == noOfIncrements)
             {
-                if (layerData[noOfIncrements].cells[i].placedPrefabs.Count > 0)
-                {
-                    var placedPrefabs = layerData[noOfIncrements].cells[i].placedPrefabs;
-                    for (int j = placedPrefabs.Count - 1; j >= 0; j--)
-                    {
-                        if (placedPrefabs[j].placedPrefab != null)
-                        {
-                            DestroyImmediate(placedPrefabs[j].placedPrefab);
-                        }
-                        placedPrefabs.RemoveAt(j);
-                    }
+                YthLayer = layerData[i];
+                break;
+            }
+        }
 
-                    if (layerData[noOfIncrements].cells[i].placedPrefabs.Count == 0)
-                    {
-                        layerData[noOfIncrements].cells.RemoveAt(i);
-                    }
+        var removingCell = YthLayer.cells.Find(cell => cell.position == currentBrushPosition);  // ===((suggested short form))
+        if (removingCell == null)
+        {
+            return;
+        }
+
+        if (removingCell.placedPrefabs.Count > 0)
+        {
+            var placedPrefabs = removingCell.placedPrefabs;
+            for (int j = placedPrefabs.Count - 1; j >= 0; j--)
+            {
+                ReduceCountInUniquePrefabs(placedPrefabs[j]);
+                if (placedPrefabs[j].placedPrefab != null)
+                {
+                    DestroyImmediate(placedPrefabs[j].placedPrefab);
                 }
-                return;
+                placedPrefabs.RemoveAt(j);
+            }
+
+            if (removingCell.placedPrefabs.Count == 0)
+            {
+                YthLayer.cells.Remove(removingCell);
+            }
+        }
+
+        return;
+
+        void ReduceCountInUniquePrefabs(PlacedPrefabData placedPrefabData)
+        {
+            var uniquePrefab = allUniquePrefabsInUse.Find(unique => unique.prefab == placedPrefabData.prefabData);
+            
+            if (uniquePrefab != null)
+            {
+                uniquePrefab.count--;
+                uniquePrefab.cellsUsingThisPrefab.Remove(removingCell);
+                if (uniquePrefab.count <= 0)
+                {
+                    allUniquePrefabsInUse.Remove(uniquePrefab);
+                }
             }
         }
     }
@@ -138,4 +183,17 @@ public class PlacedPrefabData
         this.scale = scale;
     }
 
+}
+
+[System.Serializable]
+public class UniquePrefabData
+{
+    public Prefab prefab;
+    public int count;
+    public List<LayerCellData> cellsUsingThisPrefab = new();
+    public UniquePrefabData(Prefab prefab, int count)
+    {
+        this.prefab = prefab;
+        this.count = count;
+    }
 }

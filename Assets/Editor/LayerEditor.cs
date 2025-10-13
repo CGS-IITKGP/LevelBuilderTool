@@ -9,6 +9,7 @@ public class LayerEditor : Editor
     Event e;
     Layer layer;
     Ray mouseRay;
+    bool leftMouseHeldDown;
 
     private void OnSceneGUI()
     {
@@ -53,32 +54,36 @@ public class LayerEditor : Editor
 
             CheckOverlap();
 
-            Handles.color = new Color(0, 1, 1, 0.2f);
             Handles.CubeHandleCap(0, snappedPosition + new Vector3(0, layer.tileWidth / 2, 0), Quaternion.identity, layer.tileWidth, EventType.Repaint);
 
             SceneView.RepaintAll();
         }
+        void CheckOverlap()
+        {
+            Handles.color = new Color(0, 1, 1, 0.2f);
+            var YthLayer = layer.layerData.Find(YthLayer => YthLayer.yIndex == layer.noOfIncrements);
+            if (YthLayer != null)
+            {
+                LayerCellData cellData = YthLayer.cells.Find(cell => cell.position == layer.currentBrushPosition);
+                if (cellData != null && cellData.placedPrefabs.Count > 0)
+                {
+                    Handles.color = new Color(1, 0, 0, 0.6f);
+                    return;
+                }
+            }
+        }
+
     }
 
-    private void CheckOverlap()
-    {
-        //for (int i = 0; i < layer.perCellData_s.Count; i++)
-        //{
-        //    if (layer.perCellData_s[i].position == layer.currentBrushPosition)
-        //    {
-        //        Vector3 mouseDir = mouseRay.direction;
-
-        //        List<float> components = new List<float> { Mathf.Abs(mouseDir.x), Mathf.Abs(mouseDir.y), Mathf.Abs(mouseDir.z) };
-        //        int maxComponentIndex = components.IndexOf(Mathf.Max(components.ToArray()));
-
-        //        break;
-        //    }
-        //}
-    }
 
     private void HANDLE_CLICK(Event e, Layer layer)
     {
         if (e.type == EventType.MouseDown && e.button == 0)
+        {
+            leftMouseHeldDown = true;
+                e.Use();
+        }
+        if (leftMouseHeldDown || (e.type == EventType.MouseDown && e.button == 0))
         {
             if (!layer.settingsLocked)
             {
@@ -88,28 +93,21 @@ public class LayerEditor : Editor
             //  ========== BRUSH MODE SINGLE ==========//
             if (layer.currentBrushMode == BrushMode.Single)
             {
-                PlaceSinglePrefab();
-                e.Use();
+                PlaceSingleModePrefab();
                 EditorWindow.FocusWindowIfItsOpen<GridWindow>();
             }
             //  ========== BRUSH MODE MULTI ==========//
             if (layer.currentBrushMode == BrushMode.Multi)
             {
                 // PlacePrefabAt(layer.currentBrushPosition, layer);
-                e.Use();
             }
         }
 
-        if (e.type == EventType.MouseDown && e.button == 1)
+        if (e.type == EventType.MouseUp && e.button == 0)
         {
-            if (!layer.settingsLocked)
-            {
-                Debug.LogWarning("Layer Settings must be locked to paint.");
-                return;
-            }
-
-            EraseSinglePrefab();
+            leftMouseHeldDown = false;
         }
+
 
         if (!layer.settingsLocked) return;
 
@@ -130,7 +128,7 @@ public class LayerEditor : Editor
 
 
 
-        void PlaceSinglePrefab()
+        void PlaceSingleModePrefab()
         {
             if (layer.gridTileData == null || layer.gridTileData.AllPrefabs.Count == 0)
                 return;
@@ -139,6 +137,17 @@ public class LayerEditor : Editor
             {
                 Debug.LogWarning("No Prefab Selected");
                 return;
+            }
+
+            var YthLayer = layer.layerData.Find(YthLayer => YthLayer.yIndex == layer.noOfIncrements);
+            if (YthLayer != null)
+            {
+                LayerCellData cellData = YthLayer.cells.Find(cell => cell.position == layer.currentBrushPosition);
+                if (cellData != null && cellData.placedPrefabs.Count > 0)
+                {
+                    //Debug.LogWarning("A Prefab already exists in this cell. Use Erase tool to remove it first.");
+                    return;
+                }
             }
 
             Prefab allPrefab = null;
@@ -209,6 +218,16 @@ public class LayerEditor : Editor
         }
     }
 
+    void RightClickFuntionality()
+    {
+        if (!layer.settingsLocked)
+        {
+            Debug.LogWarning("Layer Settings must be locked to paint.");
+            return;
+        }
+
+        layer.EraseSinglePrefab();
+    }
 
     List<int> GetWeightedRandomIndices(ref GroupedPrefab groupedPrefab)
     {
@@ -360,10 +379,6 @@ public class LayerEditor : Editor
         Undo.RegisterCreatedObjectUndo(placed, "Placed Prefab");
     }
 
-    private void EraseSinglePrefab()
-    {
-        layer.EraseSinglePrefab();
-    }
 
 
 
@@ -376,7 +391,12 @@ public class LayerEditor : Editor
     /// <summary>
     /// =====================CHAT GPT CODE TO KEEP FOCUS ON WINDOW AFTER NAVIGATION========================== ///
     /// </summary>
-    private bool wasNavigating = false;
+    private bool isRightMouseDown;
+    private bool isMiddleMouseDown;
+    private double rightClickDownTime;
+    private bool sceneNavigating;
+
+    private const float clickThreshold = 0.2f; // seconds to count as quick click
 
     [MenuItem("Window/Grid Window")]
     public static void ShowWindow()
@@ -386,7 +406,6 @@ public class LayerEditor : Editor
 
     private void OnEnable()
     {
-        // Keep listening even if SceneView has focus
         SceneView.duringSceneGui += OnSceneGUI;
     }
 
@@ -399,52 +418,79 @@ public class LayerEditor : Editor
     {
         Event e = Event.current;
 
-        // Detect start of right-click or middle-click
-        if (e.type == EventType.MouseDown && (e.button == 1 || e.button == 2))
+        // --- Mouse Down ---
+        if (e.type == EventType.MouseDown)
         {
-            wasNavigating = true;
+            if (e.button == 1)
+            {
+                isRightMouseDown = true;
+                rightClickDownTime = EditorApplication.timeSinceStartup;
+                sceneNavigating = false;
+            }
+            else if (e.button == 2)
+            {
+                isMiddleMouseDown = true;
+                sceneNavigating = true;
+            }
         }
 
-        // Detect release of right-click or middle-click
-        if (e.type == EventType.MouseUp && (e.button == 1 || e.button == 2))
+        // --- Mouse Drag (camera navigation) ---
+        if (e.type == EventType.MouseDrag && (isRightMouseDown || isMiddleMouseDown))
         {
-            if (wasNavigating)
-            {
-                wasNavigating = false;
+            sceneNavigating = true;
+        }
 
-                // Delay focus until after Unity finishes processing navigation
-                EditorApplication.delayCall += () =>
+        // --- Mouse Up ---
+        if (e.type == EventType.MouseUp)
+        {
+            // --- Right Click ---
+            if (e.button == 1 && isRightMouseDown)
+            {
+                isRightMouseDown = false;
+
+                double heldTime = EditorApplication.timeSinceStartup - rightClickDownTime;
+                bool isQuickClick = heldTime < clickThreshold && !sceneNavigating;
+
+                // Perform custom right-click action (short tap only)
+                if (isQuickClick)
                 {
-                    // Make sure window still exists
-                    var window = EditorWindow.GetWindow<GridWindow>();
-                    if (window != null)
-                    {
-                        window.Focus();
-                        window.Repaint();
-                    }
-                };
+                    PerformRightClickAction();
+                }
+
+                e.Use();
+
+                // Refocus window after camera navigation ends
+                FocusGridWindowAfterDelay();
+            }
+
+            // --- Middle Click ---
+            else if (e.button == 2 && isMiddleMouseDown)
+            {
+                isMiddleMouseDown = false;
+                FocusGridWindowAfterDelay();
             }
         }
     }
 
-
-
-    [InitializeOnLoadMethod]
-    static void EnableSceneFocus()   // chat GPT //
+    private void PerformRightClickAction()
     {
-        SceneView.duringSceneGui += (sceneView) =>
-        {
-            Event e = Event.current;
+        RightClickFuntionality();
+        // Place your custom function here.
+        // Example: Select tile under mouse, show context menu, erase prefab, etc.
+    }
 
-            if (e.type == EventType.MouseUp && e.button == 1)
+    private void FocusGridWindowAfterDelay()
+    {
+        // Wait a bit for Unity’s internal camera handling to finish
+        EditorApplication.delayCall += () =>
+        {
+            GridWindow window = EditorWindow.GetWindow<GridWindow>();
+            if (window != null)
             {
-                // Automatically refocus GridWindow when done rotating/panning
-                var window = EditorWindow.GetWindow<GridWindow>();
-                if (window != null)
-                {
-                    EditorApplication.delayCall += () => window.Focus();
-                }
+                window.Focus();
+                window.Repaint();
             }
         };
     }
+
 }
