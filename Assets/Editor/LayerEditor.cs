@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -74,8 +75,9 @@ public class LayerEditor : Editor
         if (e.button == 0 && e.type == EventType.MouseDrag)
         {
             leftMouseHeldDown = true;
-                e.Use();
-        } else 
+            e.Use();
+        }
+        else
         {
             leftMouseHeldDown = false;
         }
@@ -160,7 +162,8 @@ public class LayerEditor : Editor
             if (layer.prefabTabIndex == 0)
             {
                 allPrefab = layer.gridTileData.AllPrefabs[layer.selectedIndices[0]];
-            }else if (layer.prefabTabIndex == 1)
+            }
+            else if (layer.prefabTabIndex == 1)
             {
                 groupedPrefab = layer.gridTileData.GroupedPrefabs[layer.selectedIndices[0]];
                 isGrouped = true;
@@ -200,7 +203,7 @@ public class LayerEditor : Editor
                 }
 
                 ReduceToMaxAmountPerTile(ref amountPerPrefab, ref totalAmount, ref groupedPrefab);
-                
+
 
                 for (int i = 0; i < selectedPrefabsIndecies.Count; i++)
                 {
@@ -215,9 +218,9 @@ public class LayerEditor : Editor
                 }
             }
 
-            
 
-            
+
+
 
         }
     }
@@ -312,7 +315,7 @@ public class LayerEditor : Editor
 
     private void InstantiatePrefab(Prefab prefab)
     {
-        // randomize position
+        // ================== randomize position
         Vector3 pos = layer.currentBrushPosition;
         Vector3 offsetPos = Vector3.zero;
         if (prefab.randomizePosition)
@@ -335,7 +338,7 @@ public class LayerEditor : Editor
             }
         }
 
-        // randomize rot
+        // =============== randomize rot
         Quaternion rot = Quaternion.identity;
         if (prefab.randomizeRotation)
         {
@@ -357,7 +360,7 @@ public class LayerEditor : Editor
             }
         }
 
-        // randomize scale
+        // =========== randomize scale
         float scale = 1;
         if (prefab.randomizeScale)
         {
@@ -384,159 +387,123 @@ public class LayerEditor : Editor
         Undo.RegisterCreatedObjectUndo(placed, "Placed Prefab");
     }
 
+
+
+    // State tracking variables
+    private bool isRightMouseDown = false;
+    private bool isNavigating = false;
+    private int lastChildCount = -1;
+
+    #region Hierarchy Change Detection
     private void OnEnable()
     {
+        // Subscribe to the hierarchy changed event to detect prefab deletion
         EditorApplication.hierarchyChanged += OnHierarchyChanged;
+        layer = (Layer)target;
+        if (layer != null && layer.transform != null)
+        {
+            lastChildCount = layer.transform.childCount;
+        }
     }
 
     private void OnDisable()
     {
+        // Unsubscribe to prevent memory leaks
         EditorApplication.hierarchyChanged -= OnHierarchyChanged;
     }
 
     private void OnHierarchyChanged()
     {
-        if (layer == null || layer.gameObject == null)
-            return;
+        // Basic check to see if our target layer is still valid
+        if (layer == null) return;
 
-        if (!layer.gameObject.scene.IsValid())
-            return;
-
-        foreach (Transform child in layer.transform)
+        // Check if the number of children has changed (e.g., Undo/Redo, manual deletion)
+        if (layer.transform.childCount != lastChildCount)
         {
-            if (child == null)
-            {
-                TriggerLayerRefresh("Child removed or deleted");
-                return;
-            }
-        }
-
-        int childCount = layer.transform.childCount;
-        if (lastChildCount != childCount)
-        {
-            lastChildCount = childCount;
-            TriggerLayerRefresh("Child count changed (added/removed prefab)");
+            // Debug.Log("Child count changed, refreshing layer.");
+            layer.RefreshAllReferences(); // Call your refresh method
+            lastChildCount = layer.transform.childCount;
+            SceneView.RepaintAll();
         }
     }
+    #endregion
 
-    private int lastChildCount = -1;
-
-    private void TriggerLayerRefresh(string reason)
-    {
-        //Debug.Log($"Hierarchy changed under Layer ({reason}) — refreshing references.");
-        layer.RefreshAllReferences();
-        SceneView.RepaintAll();
-    }
-
-
-
-
-
-
-
-
-
-    /// <summary>
-    /// =====================CHAT GPT CODE TO KEEP FOCUS ON WINDOW AFTER NAVIGATION========================== ///
-    /// </summary>
-    private bool isRightMouseDown;
-    private bool isMiddleMouseDown;
-    private double rightClickDownTime;
-    private bool sceneNavigating;
-
-    private const float clickThreshold = 0.2f; // seconds to count as quick click
-
-    [MenuItem("Window/Grid Window")]
-    public static void ShowWindow()
-    {
-        EditorWindow.GetWindow<GridWindow>("Grid Window");
-    }
 
     private void OnSceneGUI()
     {
         e = Event.current;
         layer = (Layer)target;
 
-        if (layer.grid.windowFocused == false)
-            return;
-
+        // Draw the brush preview first, so it's always visible
         GET_MOUSE_POSITION(layer);
-
         HANDLE_CLICK(e, layer);
 
-        // --- Mouse Down ---
-        if (e.type == EventType.MouseDown)
+        // Use the ID of a control to ensure our editor has GUI focus
+        int controlID = GUIUtility.GetControlID(FocusType.Passive);
+
+        // Handle the event based on its type
+        switch (e.GetTypeForControl(controlID))
         {
-            if (e.button == 1)
-            {
-                isRightMouseDown = true;
-                rightClickDownTime = EditorApplication.timeSinceStartup;
-                sceneNavigating = false;
-            }
-            else if (e.button == 2)
-            {
-                isMiddleMouseDown = true;
-                sceneNavigating = true;
-            }
-        }
-
-        // --- Mouse Drag (camera navigation) ---
-        if (e.type == EventType.MouseDrag && (isRightMouseDown || isMiddleMouseDown))
-        {
-            sceneNavigating = true;
-        }
-
-        // --- Mouse Up ---
-        if (e.type == EventType.MouseUp)
-        {
-            // --- Right Click ---
-            if (e.button == 1 && isRightMouseDown)
-            {
-                isRightMouseDown = false;
-
-                double heldTime = EditorApplication.timeSinceStartup - rightClickDownTime;
-                bool isQuickClick = heldTime < clickThreshold && !sceneNavigating;
-
-                // Perform custom right-click action (short tap only)
-                if (isQuickClick)
+            case EventType.MouseDown:
+                if (e.button == 1) // Right mouse button pressed
                 {
-                    PerformRightClickAction();
+                    isRightMouseDown = true;
+                    isNavigating = false;
+                    // IMPORTANT: We DO NOT use e.Use() here.
+                    // Unity needs this event to initiate its camera navigation.
                 }
+                break;
 
-                e.Use();
+            case EventType.MouseDrag:
+                // If we are holding the right mouse button and drag, it's navigation.
+                if (isRightMouseDown)
+                {
+                    isNavigating = true;
+                    // We don't use the event, letting Unity handle the camera.
+                }
+                break;
 
-                // Refocus window after camera navigation ends
-                FocusGridWindowAfterDelay();
-            }
+            case EventType.MouseUp:
+                if (e.button == 1 && isRightMouseDown)
+                {
+                    // Check if this was a quick click (no dragging occurred)
+                    if (!isNavigating)
+                    {
+                        // This was a tap. Perform our action.
+                        RightClickFuntionality();
 
-            // --- Middle Click ---
-            else if (e.button == 2 && isMiddleMouseDown)
-            {
-                isMiddleMouseDown = false;
-                FocusGridWindowAfterDelay();
-            }
+                        // IMPORTANT: We ONLY use e.Use() here.
+                        // This consumes the event and stops Unity from showing the context menu.
+                        e.Use();
+                    }
+                    // Reset state for the next click
+                    isRightMouseDown = false;
+                    isNavigating = false;
+                }
+                break;
         }
+
+        // We don't need any special handling for middle-click (e.button == 2) or Alt+Click.
+        // By not interfering, Unity's default navigation works perfectly.
     }
 
-    private void PerformRightClickAction()
-    {
-        RightClickFuntionality();
-        // Place your custom function here.
-        // Example: Select tile under mouse, show context menu, erase prefab, etc.
-    }
 
-    private void FocusGridWindowAfterDelay()
+
+    [InitializeOnLoadMethod]
+    private static void KeepGridWindowFocusAfterSceneNavigation()
     {
-        // Wait a bit for Unity’s internal camera handling to finish
-        EditorApplication.delayCall += () =>
+        SceneView.duringSceneGui += sceneView =>
         {
-            GridWindow window = EditorWindow.GetWindow<GridWindow>();
-            if (window != null)
+            Event e = Event.current;
+            if (e != null && e.type == EventType.MouseUp && (e.button == 1 || e.button == 2))
             {
-                window.Focus();
-                window.Repaint();
+                EditorApplication.delayCall += () =>
+                {
+                    var window = Resources.FindObjectsOfTypeAll<GridWindow>();
+                    if (window != null && window.Length > 0)
+                        window[0].Focus();
+                };
             }
         };
     }
-
 }
