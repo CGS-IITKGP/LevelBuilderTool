@@ -7,6 +7,7 @@ public class Layer : MonoBehaviour
     [Header("References")]
     public Grid grid;
     public GridTileData gridTileData;
+    public GameObject objectParentObject;
 
     [Header("Layer Settings")]
     public string Name = "New Layer";
@@ -21,14 +22,56 @@ public class Layer : MonoBehaviour
     [NonSerialized] public BrushMode currentBrushMode = BrushMode.Single;
     [NonSerialized] public Vector3 currentBrushPosition;
     public int noOfIncrements;
-    /*[NonSerialized] */  public Vector3 currentMousePosition;
-    /*[NonSerialized] */  public List<int> selectedIndices = new();
-    /*[NonSerialized] */  public List<int> secondSelectedIndices = new();
-    /*[NonSerialized] */  public List<UniquePrefabData> allUniquePrefabsInUse = new();
+    [NonSerialized]  public Vector3 currentMousePosition;
+    [NonSerialized]  public List<int> selectedIndices = new();
+    [NonSerialized]  public List<int> secondSelectedIndices = new();
+    [NonSerialized]  public List<UniquePrefabData> allUniquePrefabsInUse = new();
     /*[NonSerialized] */  public List<LayerYLevel> layerData = new();
 
+    [NonSerialized] public List<LayerCellData> selectedCells = new();
 
 
+    void OnEnable()
+    {
+        RebuildUniquePrefabList();
+    }
+
+    // Call this to regenerate the 'allUniquePrefabsInUse' list from scratch
+    public void RebuildUniquePrefabList()
+    {
+        allUniquePrefabsInUse.Clear();
+
+        foreach (var yLevel in layerData)
+        {
+            foreach (var cell in yLevel.cells)
+            {
+                foreach (var placedPrefab in cell.placedPrefabs)
+                {
+                    AddUniquePrefabData(placedPrefab.prefabData, cell);
+                }
+            }
+        }
+    }
+
+    void AddUniquePrefabData(Prefab prefab, LayerCellData cellData)
+    {
+        var uniqueData = allUniquePrefabsInUse.Find(up => up.prefab == prefab);
+
+        if (uniqueData != null)
+        {
+            uniqueData.count++;
+            if (!uniqueData.cellsUsingThisPrefab.Contains(cellData))
+            {
+                uniqueData.cellsUsingThisPrefab.Add(cellData);
+            }
+        }
+        else
+        {
+            UniquePrefabData newUnique = new UniquePrefabData(prefab, 1);
+            newUnique.cellsUsingThisPrefab.Add(cellData);
+            allUniquePrefabsInUse.Add(newUnique);
+        }
+    }
 
 
 

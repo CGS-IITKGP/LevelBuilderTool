@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class GridWindow : EditorWindow
 {
@@ -273,9 +272,12 @@ public class GridWindow : EditorWindow
 
         void CreateNewLayer()
         {
+            GameObject layerObjects_Parent = new GameObject("New Layer (All GameObjects)");
             GameObject layerGO = new GameObject("New Layer");
             layerGO.transform.parent = grid.transform;
+            layerObjects_Parent.transform.parent = grid.transform;
             Layer layer = layerGO.AddComponent<Layer>();
+            layer.objectParentObject = layerObjects_Parent;
 
             layer.Name = "New Layer";
             layer.grid = grid;
@@ -304,6 +306,7 @@ public class GridWindow : EditorWindow
         if (grid.layers[grid.selectedLayer].gameObject.name != grid.layers[grid.selectedLayer].Name)
         {
             grid.layers[grid.selectedLayer].gameObject.name = grid.layers[grid.selectedLayer].Name;
+            grid.layers[grid.selectedLayer].objectParentObject.name = $"{grid.layers[grid.selectedLayer].Name} (All GameObjects)";
         }
 
         if (EditorWindow.focusedWindow == this)
@@ -364,6 +367,7 @@ public class GridWindow : EditorWindow
         {
             if (EditorUtility.DisplayDialog("Delete Layer?", $"Are you sure you want to delete Layer {grid.selectedLayer}?", "Yes", "No"))
             {
+                DestroyImmediate(grid.layers[grid.selectedLayer].objectParentObject);
                 DestroyImmediate(grid.layers[grid.selectedLayer].gameObject);
                 grid.layers.RemoveAt(grid.selectedLayer);
                 if (grid.selectedLayer > 0)
@@ -401,7 +405,7 @@ public class GridWindow : EditorWindow
 
                 DrawBrushButton(singleIcon, BrushMode.Single, "Place one prefab");
                 DrawBrushButton(multiIcon, BrushMode.Multi, "Place multiple prefabs");
-                DrawBrushButton(fillIcon, BrushMode.Fill, "Fill selected area");
+                DrawBrushButton(fillIcon, BrushMode.Select, "Select Cells");
                 DrawBrushButton(lineIcon, BrushMode.Line, "Draw line of prefabs");
                 DrawBrushButton(rectangleIcon, BrushMode.Rectangle, "Draw rectangle");
                 DrawBrushButton(eraseIcon, BrushMode.Erase, "Erase prefab");

@@ -75,7 +75,7 @@ public enum BrushMode
 {
     Single,
     Multi,
-    Fill,
+    Select,
     Line,
     Rectangle,
     Erase

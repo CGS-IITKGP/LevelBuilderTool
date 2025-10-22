@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,12 +9,21 @@ public class LayerEditor : Editor
     Event e;
     Layer layer;
     Ray mouseRay;
-    bool leftMouseHeldDown;
+
+
+    bool leftMouseDragging;
+    bool leftClickCancelled = false;
+
+
+    Vector3 mouseDragStartPos;
+    Vector3 mouseDragEndPos;
+    bool dragRegistered;
+
+
+
+
+
     private Vector3 lastBrushPosition = Vector3.positiveInfinity;
-
-
-
-
 
 
 
@@ -72,48 +80,78 @@ public class LayerEditor : Editor
 
     private void HANDLE_CLICK(Event e, Layer layer)
     {
-        if (e.button == 0 && e.type == EventType.MouseDrag)
         {
-            leftMouseHeldDown = true;
-            e.Use();
-        }
-        else
-        {
-            leftMouseHeldDown = false;
-        }
+            // ===== Left Mouse Button Clicking ======//
+            if (e.type == EventType.MouseDown && e.button == 0)
+            {
+                mouseDragStartPos = layer.currentBrushPosition;
+                leftClickCancelled = false;
+            }
+            else if (e.type == EventType.MouseUp && e.button == 0)
+            {
+                mouseDragEndPos = layer.currentBrushPosition;
+            }
 
-        if (leftMouseHeldDown || (e.type == EventType.MouseDown && e.button == 0))
+            // ===== Left Mouse Button Dragging ======//
+            if (e.button == 0 && e.type == EventType.MouseDrag)
+            {
+                leftClickCancelled = true;
+                leftMouseDragging = true;
+                e.Use();
+            }
+            else
+            {
+                leftMouseDragging = false;
+            }
+
+            
+        }
+     
+        
+        //  ========== BRUSH MODE SINGLE ==========//
+        if (leftMouseDragging || (e.type == EventType.MouseDown && e.button == 0))
         {
             if (!layer.settingsLocked)
             {
                 Debug.LogWarning("Layer Settings must be locked to paint.");
                 return;
             }
-            //  ========== BRUSH MODE SINGLE ==========//
             if (layer.currentBrushMode == BrushMode.Single)
             {
                 PlaceSingleModePrefab();
                 EditorWindow.FocusWindowIfItsOpen<GridWindow>();
             }
-            //  ========== BRUSH MODE MULTI ==========//
-            if (layer.currentBrushMode == BrushMode.Multi)
+        }
+
+        //  ========== BRUSH MODE MULTI ==========//
+        if (layer.currentBrushMode == BrushMode.Multi)
+        {
+            if (e.type == EventType.MouseDown && e.button == 0)
             {
-                // PlacePrefabAt(layer.currentBrushPosition, layer);
+                InitiateMultiModePlacement();
+            }
+            if (e.type == EventType.MouseUp && e.button == 0)
+            {
+                RegisterMultiModePlacement();
             }
         }
 
-        //if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.R)
-        //{
-        //    Debug.Log("Refreshing All References (R pressed)");
-        //    layer.RefreshAllReferences();
-        //    Event.current.Use();
-        //    SceneView.RepaintAll();
-        //}
-
-
+        // ========= BRUSH MODE SELECTION =============//
+        if (layer.currentBrushMode == BrushMode.Select)
+        {
+            if (e.type == EventType.MouseDown && e.button == 0)
+            {
+                InitiateSelectModePlacement();
+            }
+            if (e.type == EventType.MouseUp && e.button == 0)
+            {
+                RegisterSelectModePlacement();
+            }
+        }
 
         if (!layer.settingsLocked) return;
 
+        // ========= SCROLL WHEEL TO CHANGE LAYER ==========//
         if (e.type == EventType.ScrollWheel)
         {
             float scrollDelta = e.delta.y;
@@ -218,13 +256,97 @@ public class LayerEditor : Editor
                 }
             }
 
-
-
-
-
         }
-    }
 
+        void InitiateMultiModePlacement()
+        {
+            if (!dragRegistered)
+            {
+                dragRegistered = true;
+            }
+        }
+        
+        void RegisterMultiModePlacement()
+        {
+            if (!dragRegistered)
+            {
+                return;
+            }
+            dragRegistered = false;
+
+            Vector3 start = mouseDragStartPos;
+            Vector3 end = mouseDragEndPos;
+
+            for (float x = Math.Min(start.x, end.x); x <= Math.Max(start.x, end.x); x += layer.tileWidth)
+            {
+                for (float z = Math.Min(start.z, end.z); z <= Math.Max(start.z, end.z); z += layer.tileWidth)
+                {
+                    layer.currentBrushPosition = new Vector3(x, layer.finalYPos, z);
+                    PlaceSingleModePrefab();
+                }
+            }
+
+            EditorWindow.FocusWindowIfItsOpen<GridWindow>();
+        }
+        void InitiateSelectModePlacement()
+        {
+            if (!dragRegistered)
+            {
+                dragRegistered = true;
+            }
+        }
+        
+        void RegisterSelectModePlacement()
+        {
+            if (!dragRegistered)
+            {
+                return;
+            }
+            dragRegistered = false;
+
+            Vector3 start = mouseDragStartPos;
+            Vector3 end = mouseDragEndPos;
+
+            bool firstSelection = (!e.control && !e.shift);
+
+            for (float x = Math.Min(start.x, end.x); x <= Math.Max(start.x, end.x); x += layer.tileWidth)
+            {
+                for (float z = Math.Min(start.z, end.z); z <= Math.Max(start.z, end.z); z += layer.tileWidth)
+                {
+                    layer.currentBrushPosition = new Vector3(x, layer.finalYPos, z);
+                    SelectCell(firstSelection);
+                    firstSelection = false;
+                }
+            }
+
+            EditorWindow.FocusWindowIfItsOpen<GridWindow>();
+        }
+
+
+        void SelectCell(bool firstSelection)
+        {
+            if (firstSelection)
+            {
+                layer.selectedCells.Clear();
+            }
+
+
+            var YthLayer = layer.layerData.Find(YthLayer => YthLayer.yIndex == layer.noOfIncrements);
+            if (YthLayer == null)
+                return;
+            
+            LayerCellData cellData = YthLayer.cells.Find(cell => cell.position == layer.currentBrushPosition);
+
+            if (cellData != null)
+            {
+                if (!layer.selectedCells.Contains(cellData))
+                    layer.selectedCells.Add(cellData);
+                else if (!leftClickCancelled)
+                    layer.selectedCells.Remove(cellData);
+            }
+        }
+
+    }
     void RightClickFuntionality()
     {
         if (!layer.settingsLocked)
@@ -380,11 +502,37 @@ public class LayerEditor : Editor
         placed.transform.position = pos + offsetPos;
         placed.transform.rotation = rot;
         placed.transform.localScale = new Vector3(scale, scale, scale);
-        placed.transform.SetParent(layer.transform);
+        placed.transform.SetParent(layer.objectParentObject.transform);
 
 
         layer.RegisterPlacedPrefab(placed, prefab, offsetPos, rot, new Vector3(scale, scale, scale));
         Undo.RegisterCreatedObjectUndo(placed, "Placed Prefab");
+    }
+
+    void DrawSelectedCellOutlines()
+    {
+        foreach (Transform child in layer.transform)
+        {
+            child.gameObject.hideFlags = HideFlags.NotEditable;
+        }
+
+
+        if (layer.selectedCells == null || layer.selectedCells.Count == 0)
+            return;
+
+        Handles.color = new Color(0, 1, 0, 0.8f); 
+
+        Vector3 cubeSize = Vector3.one * layer.tileWidth;
+
+        foreach (var cell in layer.selectedCells)
+        {
+            if (cell != null)
+            {
+                Vector3 cubeCenter = cell.position + new Vector3(0, layer.tileWidth / 2, 0);
+
+                Handles.DrawWireCube(cubeCenter, cubeSize);
+            }
+        }
     }
 
 
@@ -414,13 +562,11 @@ public class LayerEditor : Editor
 
     private void OnHierarchyChanged()
     {
-        // Basic check to see if our target layer is still valid
         if (layer == null) return;
 
         // Check if the number of children has changed (e.g., Undo/Redo, manual deletion)
         if (layer.transform.childCount != lastChildCount)
         {
-            // Debug.Log("Child count changed, refreshing layer.");
             layer.RefreshAllReferences(); // Call your refresh method
             lastChildCount = layer.transform.childCount;
             SceneView.RepaintAll();
@@ -437,6 +583,7 @@ public class LayerEditor : Editor
         // Draw the brush preview first, so it's always visible
         GET_MOUSE_POSITION(layer);
         HANDLE_CLICK(e, layer);
+        DrawSelectedCellOutlines();
 
         // Use the ID of a control to ensure our editor has GUI focus
         int controlID = GUIUtility.GetControlID(FocusType.Passive);
@@ -485,6 +632,8 @@ public class LayerEditor : Editor
 
         // We don't need any special handling for middle-click (e.button == 2) or Alt+Click.
         // By not interfering, Unity's default navigation works perfectly.
+
+
     }
 
 

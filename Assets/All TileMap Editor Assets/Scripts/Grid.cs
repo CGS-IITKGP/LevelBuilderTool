@@ -41,7 +41,7 @@ public class Grid : MonoBehaviour
 
         if (!layer.settingsLocked)
         {
-            ShowFullGrid(startX, endX, startZ, endZ, tileWidth, gridY, offset);
+            ShowFullGrid(startX, endX, startZ, endZ, tileWidth, gridY);
         }
         else
         {
@@ -79,7 +79,7 @@ public class Grid : MonoBehaviour
         }
     }
 
-    private void ShowFullGrid(int startX, int endX, int startZ, int endZ, float tileWidth, float gridY, Vector3 offset)
+    private void ShowFullGrid(int startX, int endX, int startZ, int endZ, float tileWidth, float gridY)
     {
         Gizmos.color = Color.white;
 
