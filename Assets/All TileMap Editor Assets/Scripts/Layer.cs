@@ -26,7 +26,7 @@ public class Layer : MonoBehaviour
     [NonSerialized]  public List<int> selectedIndices = new();
     [NonSerialized]  public List<int> secondSelectedIndices = new();
     [NonSerialized]  public List<UniquePrefabData> allUniquePrefabsInUse = new();
-    /*[NonSerialized] */  public List<LayerYLevel> layerData = new();
+    /*[NonSerialized] */[SerializeField]  public List<LayerYLevel> layerData = new();
 
     [NonSerialized] public List<LayerCellData> selectedCells = new();
 
@@ -254,6 +254,8 @@ public class Layer : MonoBehaviour
 public class LayerYLevel
 {
     public int yIndex;
+    public bool forceVisibility = false;
+    public bool visibility = true;
     public List<LayerCellData> cells = new();
 }
 

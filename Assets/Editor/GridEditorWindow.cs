@@ -349,8 +349,25 @@ public class GridWindow : EditorWindow
             
             EditorGUI.EndDisabledGroup();
             if (settingsLocked.boolValue)
+            {
                 EditorGUILayout.PropertyField(noOfIncrement, new GUIContent("No of Increments"));
 
+                Layer layer = grid.layers[grid.selectedLayer];
+                LayerYLevel layerYLevel = layer.layerData.Find(layerY => layerY.yIndex == layer.noOfIncrements);
+
+                if (layerYLevel != null)
+                {
+                    using (new GUILayout.HorizontalScope())
+                    {
+                        layerYLevel.forceVisibility = EditorGUILayout.Toggle(layerYLevel.forceVisibility, GUILayout.MaxWidth(20));
+
+                        EditorGUI.BeginDisabledGroup(!layerYLevel.forceVisibility);
+                        layerYLevel.visibility = EditorGUILayout.Toggle("Force Visibility", layerYLevel.visibility);
+                        EditorGUI.EndDisabledGroup();
+                    }
+                }
+
+            }
         }
         else
         {

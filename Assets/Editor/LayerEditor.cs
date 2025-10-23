@@ -617,7 +617,46 @@ public class LayerEditor : Editor
             }
         }
     }
+    void HandleLayerVisibility()
+    {
+        int y = layer.noOfIncrements;
 
+        for (int i = 0; i < layer.layerData.Count; i++)
+        {
+            LayerYLevel layerY = layer.layerData[i];
+            if (!layerY.forceVisibility)
+            {
+                if (layerY.yIndex <= y)
+                {
+                    SetLayerYVisibility(layerY, true);
+                }
+                else
+                {
+                    SetLayerYVisibility(layerY, false);
+                }
+            }else
+            {
+                SetLayerYVisibility(layerY, layerY.visibility);
+            }
+        }
+
+
+        void SetLayerYVisibility(LayerYLevel layerY, bool vis)
+        {
+            for (int i = 0; i < layerY.cells.Count; i++)
+            {
+                LayerCellData cell = layerY.cells[i];
+                for (int j = 0; j < cell.placedPrefabs.Count; j++)
+                {
+                    GameObject prefabInstance = cell.placedPrefabs[j].placedPrefab;
+                    if (prefabInstance != null)
+                    {
+                        prefabInstance.SetActive(vis);
+                    }
+                }
+            }
+        }
+    }
 
     // State tracking variables
     private bool isRightMouseDown = false;
@@ -666,6 +705,12 @@ public class LayerEditor : Editor
         GET_MOUSE_POSITION(layer);
         HANDLE_CLICK(e, layer);
         DrawSelectedCellOutlines();
+
+        HandleLayerVisibility();
+
+
+        
+
 
         // Use the ID of a control to ensure our editor has GUI focus
         int controlID = GUIUtility.GetControlID(FocusType.Passive);
