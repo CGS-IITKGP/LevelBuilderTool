@@ -35,8 +35,8 @@ public class LayerEditor : Editor
 
         mouseRay = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
 
-        layer.finalYPos = layer.gridYPos + layer.noOfIncrements * layer.gridYIncrement;
-        Plane groundPlane = new Plane(Vector3.up, new Vector3(0, layer.finalYPos, 0));
+        layer.finalYPos_current = layer.gridYPos + layer.noOfIncrements * layer.gridYIncrement;
+        Plane groundPlane = new Plane(Vector3.up, new Vector3(0, layer.finalYPos_current, 0));
 
         if (groundPlane.Raycast(mouseRay, out float distance))
         {
@@ -46,7 +46,7 @@ public class LayerEditor : Editor
             int snappedX = Mathf.FloorToInt(hitPoint.x / layer.tileWidth);
             int snappedZ = Mathf.FloorToInt(hitPoint.z / layer.tileWidth);
 
-            Vector3 snappedPosition = new(snappedX * layer.tileWidth + layer.tileWidth / 2, layer.finalYPos, snappedZ * layer.tileWidth + layer.tileWidth / 2);
+            Vector3 snappedPosition = new(snappedX * layer.tileWidth + layer.tileWidth / 2, layer.finalYPos_current, snappedZ * layer.tileWidth + layer.tileWidth / 2);
             layer.currentBrushPosition = snappedPosition;
 
             CheckOverlap();
@@ -99,33 +99,39 @@ public class LayerEditor : Editor
                 leftMouseDragging = true;
                 e.Use();
             }
-            else
+            else if (e.type == EventType.MouseUp)
             {
                 leftMouseDragging = false;
             }
 
-            
+
         }
      
         
         //  ========== BRUSH MODE SINGLE ==========//
-        if (leftMouseDragging || (e.type == EventType.MouseDown && e.button == 0))
+        if (layer.currentBrushMode == BrushMode.Single)
         {
-            if (!layer.settingsLocked)
+            if (leftMouseDragging || (e.type == EventType.MouseDown && e.button == 0))
             {
-                Debug.LogWarning("Layer Settings must be locked to paint.");
-                return;
-            }
-            if (layer.currentBrushMode == BrushMode.Single)
-            {
+                if (!layer.settingsLocked)
+                {
+                    Debug.LogWarning("Layer Settings must be locked to paint.");
+                    return;
+                }
                 PlaceSingleModePrefab();
-                EditorWindow.FocusWindowIfItsOpen<GridWindow>();
+                //EditorWindow.FocusWindowIfItsOpen<GridWindow>();
+                Selection.activeGameObject = layer.gameObject;
+                e.Use();
             }
         }
 
         //  ========== BRUSH MODE MULTI ==========//
         if (layer.currentBrushMode == BrushMode.Multi)
         {
+            if (leftMouseDragging)
+            {
+                DrawDragSelectionHologram();
+            }
             if (e.type == EventType.MouseDown && e.button == 0)
             {
                 InitiateMultiModePlacement();
@@ -133,12 +139,19 @@ public class LayerEditor : Editor
             if (e.type == EventType.MouseUp && e.button == 0)
             {
                 RegisterMultiModePlacement();
+
+                Selection.activeGameObject = layer.gameObject;
+                e.Use();
             }
         }
 
         // ========= BRUSH MODE SELECTION =============//
         if (layer.currentBrushMode == BrushMode.Select)
         {
+            if (leftMouseDragging)
+            {
+                DrawDragSelectionHologram();
+            }
             if (e.type == EventType.MouseDown && e.button == 0)
             {
                 InitiateSelectModePlacement();
@@ -146,7 +159,23 @@ public class LayerEditor : Editor
             if (e.type == EventType.MouseUp && e.button == 0)
             {
                 RegisterSelectModePlacement();
+
+                Selection.activeGameObject = layer.gameObject;
+                e.Use();
             }
+
+            if (e.type == EventType.KeyDown && e.keyCode == KeyCode.Delete)
+            {
+                Debug.Log("Deleting Selected Cell Prefabs");
+                DeleteSelectedCellPrefabs();
+                e.Use();
+                GUIUtility.hotControl = 0; // ensures SceneView regains control (Chat gpt)
+                HandleUtility.Repaint();   // force SceneView update
+            }
+        }
+        else
+        {
+            layer.selectedCells.Clear();
         }
 
         if (!layer.settingsLocked) return;
@@ -167,6 +196,19 @@ public class LayerEditor : Editor
             e.Use();
         }
 
+        if (e.type == EventType.KeyDown)
+        {
+            if (e.keyCode == KeyCode.UpArrow)
+            {
+                layer.noOfIncrements++;
+                e.Use();
+            }
+            else if (e.keyCode == KeyCode.DownArrow)
+            {
+                layer.noOfIncrements--;
+                e.Use();
+            }
+        }
 
 
         void PlaceSingleModePrefab()
@@ -265,7 +307,6 @@ public class LayerEditor : Editor
                 dragRegistered = true;
             }
         }
-        
         void RegisterMultiModePlacement()
         {
             if (!dragRegistered)
@@ -281,13 +322,14 @@ public class LayerEditor : Editor
             {
                 for (float z = Math.Min(start.z, end.z); z <= Math.Max(start.z, end.z); z += layer.tileWidth)
                 {
-                    layer.currentBrushPosition = new Vector3(x, layer.finalYPos, z);
+                    layer.currentBrushPosition = new Vector3(x, layer.finalYPos_current, z);
                     PlaceSingleModePrefab();
                 }
             }
 
-            EditorWindow.FocusWindowIfItsOpen<GridWindow>();
+            //EditorWindow.FocusWindowIfItsOpen<GridWindow>();
         }
+
         void InitiateSelectModePlacement()
         {
             if (!dragRegistered)
@@ -295,7 +337,6 @@ public class LayerEditor : Editor
                 dragRegistered = true;
             }
         }
-        
         void RegisterSelectModePlacement()
         {
             if (!dragRegistered)
@@ -313,13 +354,13 @@ public class LayerEditor : Editor
             {
                 for (float z = Math.Min(start.z, end.z); z <= Math.Max(start.z, end.z); z += layer.tileWidth)
                 {
-                    layer.currentBrushPosition = new Vector3(x, layer.finalYPos, z);
+                    layer.currentBrushPosition = new Vector3(x, layer.finalYPos_current, z);
                     SelectCell(firstSelection);
                     firstSelection = false;
                 }
             }
 
-            EditorWindow.FocusWindowIfItsOpen<GridWindow>();
+            //EditorWindow.FocusWindowIfItsOpen<GridWindow>();
         }
 
 
@@ -344,6 +385,34 @@ public class LayerEditor : Editor
                 else if (!leftClickCancelled)
                     layer.selectedCells.Remove(cellData);
             }
+        }
+
+        void DeleteSelectedCellPrefabs()
+        {
+            if (layer.selectedCells == null || layer.selectedCells.Count == 0)
+                return;
+
+
+            Undo.RecordObject(layer, "Delete Selected Cell Prefabs");
+
+            foreach (var cell in layer.selectedCells)
+            {
+                foreach (var placedPrefab in cell.placedPrefabs)
+                {
+                    if (placedPrefab.placedPrefab != null)
+                    {
+                        Undo.RegisterFullObjectHierarchyUndo(placedPrefab.placedPrefab, "Delete Prefab");
+                    }
+                }
+            }
+
+            foreach (var cell in layer.selectedCells)
+            {
+                    layer.EraseSinglePrefab(cell);
+            }
+            layer.selectedCells.Clear();
+
+            EditorUtility.SetDirty(layer);
         }
 
     }
@@ -511,12 +580,6 @@ public class LayerEditor : Editor
 
     void DrawSelectedCellOutlines()
     {
-        foreach (Transform child in layer.transform)
-        {
-            child.gameObject.hideFlags = HideFlags.NotEditable;
-        }
-
-
         if (layer.selectedCells == null || layer.selectedCells.Count == 0)
             return;
 
@@ -534,7 +597,26 @@ public class LayerEditor : Editor
             }
         }
     }
+    void DrawDragSelectionHologram()
+    {
+        Handles.color = new Color(0.9f, 0.9f, 0.9f, 0.9f);
 
+        Vector3 cubeSize = Vector3.one * layer.tileWidth;
+
+        Vector3 start = mouseDragStartPos;
+        Vector3 end = layer.currentBrushPosition;
+
+        for (float x = Math.Min(start.x, end.x); x <= Math.Max(start.x, end.x); x += layer.tileWidth)
+        {
+            for (float z = Math.Min(start.z, end.z); z <= Math.Max(start.z, end.z); z += layer.tileWidth)
+            {
+                Vector3 pos = new Vector3(x, layer.finalYPos_current, z);
+                Vector3 cubeCenter = pos + new Vector3(0, layer.tileWidth / 2, 0);
+
+                Handles.DrawWireCube(cubeCenter, cubeSize);
+            }
+        }
+    }
 
 
     // State tracking variables

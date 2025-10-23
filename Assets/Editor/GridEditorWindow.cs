@@ -1,7 +1,7 @@
-using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class GridWindow : EditorWindow
 {
@@ -312,13 +312,9 @@ public class GridWindow : EditorWindow
         if (EditorWindow.focusedWindow == this)
         {
             Selection.activeGameObject = grid.layers[grid.selectedLayer].gameObject;
-            grid.windowFocused = true;
-        }else
-        {
-            grid.windowFocused = false;
         }
 
-            GUILayout.BeginVertical(boxStyle);
+        GUILayout.BeginVertical(boxStyle);
 
         currentLayerSO = new SerializedObject(grid.layers[grid.selectedLayer]);
 
@@ -378,6 +374,22 @@ public class GridWindow : EditorWindow
         }
 
         GUILayout.EndVertical();
+
+        Event e = Event.current;
+
+        if (e.type == EventType.KeyDown)
+        {
+            if (e.keyCode == KeyCode.UpArrow)
+            {
+                grid.layers[grid.selectedLayer].noOfIncrements++;
+                e.Use();
+            }
+            else if (e.keyCode == KeyCode.DownArrow)
+            {
+                grid.layers[grid.selectedLayer].noOfIncrements--;
+                e.Use();
+            }
+        }
     }
     private void BRUSH_TOOLS_GUI()
     {

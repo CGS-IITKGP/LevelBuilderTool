@@ -12,7 +12,7 @@ public class Layer : MonoBehaviour
     [Header("Layer Settings")]
     public string Name = "New Layer";
     [HideInInspector] public float gridYPos = 0f;
-    [HideInInspector] public float finalYPos = 0f;
+    [HideInInspector] public float finalYPos_current = 0f;
     [HideInInspector] public float gridYIncrement = 1f;
     [HideInInspector] public float tileWidth = 1f;
     [HideInInspector] public bool settingsLocked = false;
@@ -87,7 +87,7 @@ public class Layer : MonoBehaviour
 
         LayerCellData AddPrefabToLayerData(PlacedPrefabData newPlaced)
         {
-            int yIndex = Mathf.RoundToInt((finalYPos - gridYPos) / gridYIncrement);
+            int yIndex = Mathf.RoundToInt((finalYPos_current - gridYPos) / gridYIncrement);
             for (int i = 0; i < layerData.Count; i++)
             {
                 if (layerData[i].yIndex == yIndex)
@@ -138,19 +138,26 @@ public class Layer : MonoBehaviour
     }
 
 
-    public void EraseSinglePrefab()
+    public void EraseSinglePrefab(LayerCellData cellToDelete = null)
     {
-        var YthLayer = layerData[0];
+        LayerYLevel YthLayer = null;
+
         for (int i = 0; i < layerData.Count; i++)
         {
-            if (layerData[i].yIndex == noOfIncrements)
+            if (layerData[i].yIndex == cellToDelete.position.y)
             {
                 YthLayer = layerData[i];
                 break;
             }
         }
 
+
         var removingCell = YthLayer.cells.Find(cell => cell.position == currentBrushPosition);  // ===((suggested short form))
+        if (cellToDelete != null)
+        {
+            removingCell = cellToDelete;
+        }
+
         if (removingCell == null)
         {
             return;
@@ -172,6 +179,7 @@ public class Layer : MonoBehaviour
             if (removingCell.placedPrefabs.Count == 0)
             {
                 YthLayer.cells.Remove(removingCell);
+                Debug.Log("Removed cell at position: " + removingCell.position);
             }
 
             if (YthLayer.cells.Count == 0)

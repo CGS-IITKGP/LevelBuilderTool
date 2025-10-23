@@ -21,7 +21,7 @@ public class Grid : MonoBehaviour
     {
         Layer layer = layers[selectedLayer];
         float tileWidth = layer.tileWidth;
-        float gridY = layer.finalYPos;
+        float gridY = layer.finalYPos_current;
         Vector3 offset = layer.currentBrushPosition - new Vector3(tileWidth / 2f, 0, tileWidth / 2f);
         offset.y = 0;
 
@@ -43,7 +43,7 @@ public class Grid : MonoBehaviour
         {
             ShowFullGrid(startX, endX, startZ, endZ, tileWidth, gridY);
         }
-        else
+        else if (layer.currentBrushMode == BrushMode.Single || layer.currentBrushMode == BrushMode.Multi)
         {
             // --- Draw grid lines with fading ---
             for (int i = startX; i <= endX; i++)
