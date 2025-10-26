@@ -357,6 +357,8 @@ public class GridWindow : EditorWindow
 
                 if (layerYLevel != null)
                 {
+                    GUILayout.BeginVertical("box");
+                    GUILayout.Label($"{layer.noOfIncrements}- Increment Properties");
                     using (new GUILayout.HorizontalScope())
                     {
                         layerYLevel.forceVisibility = EditorGUILayout.Toggle(layerYLevel.forceVisibility, GUILayout.MaxWidth(20));
@@ -365,8 +367,8 @@ public class GridWindow : EditorWindow
                         layerYLevel.visibility = EditorGUILayout.Toggle("Force Visibility", layerYLevel.visibility);
                         EditorGUI.EndDisabledGroup();
                     }
+                    GUILayout.EndVertical();
                 }
-
             }
         }
         else

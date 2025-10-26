@@ -121,7 +121,8 @@ public class LayerEditor : Editor
                 PlaceSingleModePrefab();
                 //EditorWindow.FocusWindowIfItsOpen<GridWindow>();
                 Selection.activeGameObject = layer.gameObject;
-                e.Use();
+                if (e.type == EventType.MouseDown && e.button == 0)
+                    e.Use();
             }
         }
 
@@ -166,7 +167,6 @@ public class LayerEditor : Editor
 
             if (e.type == EventType.KeyDown && e.keyCode == KeyCode.Delete)
             {
-                Debug.Log("Deleting Selected Cell Prefabs");
                 DeleteSelectedCellPrefabs();
                 e.Use();
                 GUIUtility.hotControl = 0; // ensures SceneView regains control (Chat gpt)

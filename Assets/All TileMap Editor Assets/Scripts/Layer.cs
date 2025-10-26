@@ -142,12 +142,19 @@ public class Layer : MonoBehaviour
     {
         LayerYLevel YthLayer = null;
 
-        for (int i = 0; i < layerData.Count; i++)
+        if (cellToDelete == null)
         {
-            if (layerData[i].yIndex == cellToDelete.position.y)
+            YthLayer = layerData.Find(y => y.yIndex == noOfIncrements);
+        }else
+        {
+
+            for (int i = 0; i < layerData.Count; i++)
             {
-                YthLayer = layerData[i];
-                break;
+                if (layerData[i].yIndex == cellToDelete.position.y)
+                {
+                    YthLayer = layerData[i];
+                    break;
+                }
             }
         }
 
@@ -179,7 +186,6 @@ public class Layer : MonoBehaviour
             if (removingCell.placedPrefabs.Count == 0)
             {
                 YthLayer.cells.Remove(removingCell);
-                Debug.Log("Removed cell at position: " + removingCell.position);
             }
 
             if (YthLayer.cells.Count == 0)
