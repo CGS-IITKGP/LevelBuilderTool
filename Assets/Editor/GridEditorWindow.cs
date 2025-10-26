@@ -587,160 +587,184 @@ public class GridWindow : EditorWindow
     {
         if (currentPrefabList != allPrefabs && !forceDraw) return;
 
+        if (SelectedIndices.Count == 0) return;
 
-        if (SelectedIndices.Count > 0)
+        GUILayout.BeginVertical(boxStyle);
+        GUILayout.Space(15);
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            Rect rect = GUILayoutUtility.GetRect(prefabThumbnailSize, prefabThumbnailSize, GUILayout.ExpandWidth(false));
+
+            GameObject prefab = (GameObject)prefabList.GetArrayElementAtIndex(SelectedIndices[0]).FindPropertyRelative("prefab").objectReferenceValue;
+            Texture2D preview = prefab ? AssetPreview.GetAssetPreview(prefab) : Texture2D.grayTexture;
+
+            if (prefab != null && preview != null)
+            {
+                GUI.Box(rect, GUIContent.none);
+                GUI.DrawTexture(rect, preview, ScaleMode.ScaleToFit);
+            }
+
+            using (new EditorGUILayout.VerticalScope())
+            {
+                DrawCenteredLabel("Selected Prefab Properties", 20, FontStyle.Bold, new Color(0.145f, 0.346f, 0.655f));
+                if (prefab != null)
+                    GUILayout.Label(prefab.name, EditorStyles.centeredGreyMiniLabel);
+            }
+        }
+
+        GUILayout.Space(15);
+
+        List<SerializedProperty> selectedPrefabs = new List<SerializedProperty>();
+        foreach (int index in SelectedIndices)
+            selectedPrefabs.Add(prefabList.GetArrayElementAtIndex(index));
+
+        SerializedProperty firstElement = selectedPrefabs[0];
+
+        // --- Randomize Position ---
+        using (new GUILayout.HorizontalScope())
+        {
+            EditorGUI.BeginChangeCheck();
+            bool newVal = EditorGUILayout.Toggle("Randomize Position", firstElement.FindPropertyRelative("randomizePosition").boolValue);
+            if (EditorGUI.EndChangeCheck())
+            {
+                foreach (var sp in selectedPrefabs)
+                    sp.FindPropertyRelative("randomizePosition").boolValue = newVal;
+            }
+        }
+
+        if (firstElement.FindPropertyRelative("randomizePosition").boolValue)
         {
             GUILayout.BeginVertical(boxStyle);
-            GUILayout.Space(15);
-            using (new EditorGUILayout.HorizontalScope())
             {
-                Rect rect = GUILayoutUtility.GetRect(prefabThumbnailSize, prefabThumbnailSize, GUILayout.ExpandWidth(false));
+                EditorGUI.BeginChangeCheck();
+                bool newRangeRand = EditorGUILayout.Toggle("Range Randomization", firstElement.FindPropertyRelative("rangeRandomizationPosition").boolValue);
+                if (EditorGUI.EndChangeCheck())
+                    foreach (var sp in selectedPrefabs) sp.FindPropertyRelative("rangeRandomizationPosition").boolValue = newRangeRand;
 
-                GameObject prefab = (GameObject)prefabList.GetArrayElementAtIndex(SelectedIndices[0]).FindPropertyRelative("prefab").objectReferenceValue;
-                Texture2D preview = prefab ? AssetPreview.GetAssetPreview(prefab) : Texture2D.grayTexture;
-
-                if (prefab != null && preview != null)
+                if (newRangeRand)
                 {
-                    GUI.Box(rect, GUIContent.none);
-                    GUI.DrawTexture(rect, preview, ScaleMode.ScaleToFit);
-
-                }
-
-                using (new EditorGUILayout.VerticalScope())
-                {
-                    DrawCenteredLabel("Selected Prefab Properties", 20, FontStyle.Bold, new Color(0.145f, 0.346f, 0.655f));
-                    if (prefab != null)
+                    EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("positionRange"));
+                    foreach (var sp in selectedPrefabs)
                     {
-                        //Rect labelRect = new Rect(rect.x, rect.yMax - 16, rect.width, 16);
-                        GUILayout.Label(prefab.name, EditorStyles.centeredGreyMiniLabel);
-                    }
-                }
-            }
-            GUILayout.Space(15);
-            SerializedProperty firstElement = prefabList.GetArrayElementAtIndex(SelectedIndices[0]);
-
-            using (new GUILayout.HorizontalScope())
-            {
-                //GUILayout.Label("Randomize Position", GUILayout.MinWidth(120));
-                EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("randomizePosition"));
-            }
-
-            if (firstElement.FindPropertyRelative("randomizePosition").boolValue)
-            {
-                GUILayout.BeginVertical(boxStyle);
-                {
-                    EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("rangeRandomizationPosition"), new GUIContent("Range Randomization"));
-                    if (firstElement.FindPropertyRelative("rangeRandomizationPosition").boolValue)
-                    {
-                        EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("positionRange"));
-                        if (firstElement.FindPropertyRelative("positionRange").arraySize < 2 || firstElement.FindPropertyRelative("positionRange").arraySize > 2)
-                        {
-                            firstElement.FindPropertyRelative("positionRange").arraySize = 2;
-                        }
-                    }
-                    else
-                    {
-                        EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("specificPositions"));
-                        if (firstElement.FindPropertyRelative("specificPositions").arraySize < 1)
-                        {
-                            firstElement.FindPropertyRelative("specificPositions").arraySize = 1;
-                        }
-                    }
-                    // using (new GUILayout.HorizontalScope())
-                    // {
-                    //     GUILayout.Label("X :");
-                    //     GUILayout.Label("MinX");
-                    //     firstElement.FindPropertyRelative("minX").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("minX").floatValue, -.5f, firstElement.FindPropertyRelative("maxX").floatValue);
-                    //     GUILayout.Label("MaxX");
-                    //     firstElement.FindPropertyRelative("maxX").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("maxX").floatValue, firstElement.FindPropertyRelative("minX").floatValue, .5f);
-                    // }
-                    // using (new GUILayout.HorizontalScope())
-                    // {
-                    //     GUILayout.Label("Y :");
-                    //     GUILayout.Label("MinY");
-                    //     firstElement.FindPropertyRelative("minY").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("minY").floatValue, -.5f, firstElement.FindPropertyRelative("maxY").floatValue);
-                    //     GUILayout.Label("MaxY");
-                    //     firstElement.FindPropertyRelative("maxY").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("maxY").floatValue, firstElement.FindPropertyRelative("minY").floatValue, .5f);
-                    // }
-                    // using (new GUILayout.HorizontalScope())
-                    // {
-                    //     GUILayout.Label("Z :");
-                    //     GUILayout.Label("MinZ");
-                    //     firstElement.FindPropertyRelative("minZ").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("minZ").floatValue, -.5f, firstElement.FindPropertyRelative("maxZ").floatValue);
-                    //     GUILayout.Label("MaxZ");
-                    //     firstElement.FindPropertyRelative("maxZ").floatValue = EditorGUILayout.Slider(firstElement.FindPropertyRelative("maxZ").floatValue, firstElement.FindPropertyRelative("minZ").floatValue, .5f);
-                    // }
-                }
-                EditorGUILayout.EndVertical();
-            }
-
-            EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("randomizeRotation"));
-
-            if (firstElement.FindPropertyRelative("randomizeRotation").boolValue)
-            {
-            GUILayout.BeginVertical(boxStyle);
-                EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("rangeRandomizationRotation"), new GUIContent("Range Randomization"));
-                if (firstElement.FindPropertyRelative("rangeRandomizationRotation").boolValue)
-                {
-                    EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("rotationRange"));
-                    if (firstElement.FindPropertyRelative("rotationRange").arraySize < 2 || firstElement.FindPropertyRelative("rotationRange").arraySize > 2)
-                    {
-                        firstElement.FindPropertyRelative("rotationRange").arraySize = 2;
+                        SerializedProperty arr = sp.FindPropertyRelative("positionRange");
+                        arr.arraySize = Mathf.Clamp(arr.arraySize, 2, 2);
                     }
                 }
                 else
                 {
-                    EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("specificRotations"));
-                    if (firstElement.FindPropertyRelative("specificRotations").arraySize < 1)
+                    EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("specificPositions"));
+                    foreach (var sp in selectedPrefabs)
                     {
-                        firstElement.FindPropertyRelative("specificRotations").arraySize = 1;
+                        SerializedProperty arr = sp.FindPropertyRelative("specificPositions");
+                        arr.arraySize = Mathf.Max(1, arr.arraySize);
                     }
-                }   
-            GUILayout.EndVertical();
-            }
-
-            EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("randomizeScale"));
-
-            if (firstElement.FindPropertyRelative("randomizeScale").boolValue)
-            {
-            GUILayout.BeginVertical(boxStyle);
-                EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("scaleRange"));
-                if (firstElement.FindPropertyRelative("scaleRange").arraySize < 2 || firstElement.FindPropertyRelative("scaleRange").arraySize > 2)
-                {
-                    firstElement.FindPropertyRelative("scaleRange").arraySize = 2;
-                }
-            GUILayout.EndVertical();
-            }
-
-            using (new GUILayout.HorizontalScope())
-            {
-                GUILayout.Label("No of Prefab to place per Tile");
-                GUILayout.Label("Min :", GUILayout.Width(30));
-                firstElement.FindPropertyRelative("noOfPrefabPerTileMin").intValue = EditorGUILayout.IntField(firstElement.FindPropertyRelative("noOfPrefabPerTileMin").intValue);
-                firstElement.FindPropertyRelative("noOfPrefabPerTileMin").intValue = Mathf.Clamp(firstElement.FindPropertyRelative("noOfPrefabPerTileMin").intValue, 0, 100);
-                GUILayout.Label("Max :", GUILayout.Width(30));
-                firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue = EditorGUILayout.IntField(firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue);
-                firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue = Mathf.Clamp(firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue, 0, 100);
-
-                if (firstElement.FindPropertyRelative("noOfPrefabPerTileMin").intValue > firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue)
-                {
-                    firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue = firstElement.FindPropertyRelative("noOfPrefabPerTileMin").intValue;
                 }
             }
-
-            if (SelectedIndices == secondSelectedIndices)
-            {
-                SerializedProperty listOfPrefabs = groupedPrefabs.GetArrayElementAtIndex(selectedIndices[0]).FindPropertyRelative("prefabs");
-                SerializedProperty chance = listOfPrefabs.GetArrayElementAtIndex(secondSelectedIndices[0]).FindPropertyRelative("chanceOfSelection");
-                    
-
-                EditorGUILayout.PropertyField(chance, GUILayout.Width(200));
-            }
-
             GUILayout.EndVertical();
         }
 
+        // --- Randomize Rotation ---
+        EditorGUI.BeginChangeCheck();
+        bool randomizeRotation = EditorGUILayout.Toggle("Randomize Rotation", firstElement.FindPropertyRelative("randomizeRotation").boolValue);
+        if (EditorGUI.EndChangeCheck())
+            foreach (var sp in selectedPrefabs) sp.FindPropertyRelative("randomizeRotation").boolValue = randomizeRotation;
+
+        if (randomizeRotation)
+        {
+            GUILayout.BeginVertical(boxStyle);
+            EditorGUI.BeginChangeCheck();
+            bool rangeRandRot = EditorGUILayout.Toggle("Range Randomization", firstElement.FindPropertyRelative("rangeRandomizationRotation").boolValue);
+            if (EditorGUI.EndChangeCheck())
+                foreach (var sp in selectedPrefabs) sp.FindPropertyRelative("rangeRandomizationRotation").boolValue = rangeRandRot;
+
+            if (rangeRandRot)
+            {
+                EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("rotationRange"));
+                foreach (var sp in selectedPrefabs)
+                {
+                    SerializedProperty arr = sp.FindPropertyRelative("rotationRange");
+                    arr.arraySize = Mathf.Clamp(arr.arraySize, 2, 2);
+                }
+            }
+            else
+            {
+                EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("specificRotations"));
+                foreach (var sp in selectedPrefabs)
+                {
+                    SerializedProperty arr = sp.FindPropertyRelative("specificRotations");
+                    arr.arraySize = Mathf.Max(1, arr.arraySize);
+                }
+            }
+            GUILayout.EndVertical();
+        }
+
+        // --- Randomize Scale ---
+        EditorGUI.BeginChangeCheck();
+        bool randomizeScale = EditorGUILayout.Toggle("Randomize Scale", firstElement.FindPropertyRelative("randomizeScale").boolValue);
+        if (EditorGUI.EndChangeCheck())
+            foreach (var sp in selectedPrefabs) sp.FindPropertyRelative("randomizeScale").boolValue = randomizeScale;
+
+        if (randomizeScale)
+        {
+            GUILayout.BeginVertical(boxStyle);
+            EditorGUILayout.PropertyField(firstElement.FindPropertyRelative("scaleRange"));
+            foreach (var sp in selectedPrefabs)
+            {
+                SerializedProperty arr = sp.FindPropertyRelative("scaleRange");
+                arr.arraySize = Mathf.Clamp(arr.arraySize, 2, 2);
+            }
+            GUILayout.EndVertical();
+        }
+
+        // --- Number of prefabs per tile ---
+        using (new GUILayout.HorizontalScope())
+        {
+            GUILayout.Label("No of Prefab to place per Tile");
+            GUILayout.Label("Min :", GUILayout.Width(30));
+
+            EditorGUI.BeginChangeCheck();
+            int newMin = EditorGUILayout.IntField(firstElement.FindPropertyRelative("noOfPrefabPerTileMin").intValue);
+            if (EditorGUI.EndChangeCheck())
+            {
+                foreach (var sp in selectedPrefabs)
+                    sp.FindPropertyRelative("noOfPrefabPerTileMin").intValue = Mathf.Clamp(newMin, 0, 100);
+            }
+
+            GUILayout.Label("Max :", GUILayout.Width(30));
+            EditorGUI.BeginChangeCheck();
+            int newMax = EditorGUILayout.IntField(firstElement.FindPropertyRelative("noOfPrefabPerTileMax").intValue);
+            if (EditorGUI.EndChangeCheck())
+            {
+                foreach (var sp in selectedPrefabs)
+                    sp.FindPropertyRelative("noOfPrefabPerTileMax").intValue = Mathf.Clamp(newMax, 0, 100);
+            }
+        }
+
+        // --- Chance of Spawning ---
+        using (new GUILayout.HorizontalScope())
+        {
+            GUILayout.Label("Chance Of Spawning Each");
+            EditorGUI.BeginChangeCheck();
+            float newChance = EditorGUILayout.FloatField(firstElement.FindPropertyRelative("chanceOfSpawning").floatValue);
+            if (EditorGUI.EndChangeCheck())
+            {
+                foreach (var sp in selectedPrefabs)
+                    sp.FindPropertyRelative("chanceOfSpawning").floatValue = Mathf.Clamp(newChance, 0f, 100f);
+            }
+        }
+
+        // --- Optional group logic ---
+        if (SelectedIndices == secondSelectedIndices)
+        {
+            SerializedProperty listOfPrefabs = groupedPrefabs.GetArrayElementAtIndex(selectedIndices[0]).FindPropertyRelative("prefabs");
+            SerializedProperty chance = listOfPrefabs.GetArrayElementAtIndex(secondSelectedIndices[0]).FindPropertyRelative("chanceOfSelection");
+            EditorGUILayout.PropertyField(chance, GUILayout.Width(200));
+        }
+
+        GUILayout.EndVertical();
     }
+
     private void GROUPED_PREFAB_PROPERTIES_GUI()
     {
         if (currentPrefabList != groupedPrefabs) return;

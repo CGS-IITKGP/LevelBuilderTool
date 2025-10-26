@@ -47,6 +47,7 @@ public class Prefab
         this.scaleRange = new List<float>(prefabPrev.scaleRange);
         this.noOfPrefabPerTileMin = prefabPrev.noOfPrefabPerTileMin;
         this.noOfPrefabPerTileMax = prefabPrev.noOfPrefabPerTileMax;
+        this.chanceOfSpawning = prefabPrev.chanceOfSpawning;
     }
 
     public GameObject prefab;
@@ -62,6 +63,7 @@ public class Prefab
     public List<float> scaleRange = new List<float>(2) { 1f, 1f };
     public int noOfPrefabPerTileMin = 1;
     public int noOfPrefabPerTileMax = 1;
+    public float chanceOfSpawning = 100f;
 
     // only for grouping
     [Range(0f, 10f)]

@@ -506,6 +506,9 @@ public class LayerEditor : Editor
 
     private void InstantiatePrefab(Prefab prefab)
     {
+        if (UnityEngine.Random.Range(0, 100) > prefab.chanceOfSpawning)
+            return;
+
         // ================== randomize position
         Vector3 pos = layer.currentBrushPosition;
         Vector3 offsetPos = Vector3.zero;
